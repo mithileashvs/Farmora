@@ -1,0 +1,9 @@
+# Local secrets — never commit
+config.js
+
+# OS / editor junk
+.DS_Store
+Thumbs.db
+*.swp
+.vscode/
+.idea/
