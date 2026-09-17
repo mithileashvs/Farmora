@@ -1,0 +1,15 @@
+{
+  "id": "paddy-cultivation-tn",
+  "title": "Paddy (Rice) Cultivation Basics for Tamil Nadu",
+  "source": "Tamil Nadu Agricultural University — general crop production guidance",
+  "sourceUrl": "https://www.tnau.ac.in",
+  "organization": "Tamil Nadu Agricultural University (TNAU)",
+  "category": "crop_cultivation",
+  "crop": "paddy",
+  "cropStage": "sowing",
+  "topic": "sowing season, land preparation, water management",
+  "language": "en-IN",
+  "region": "Tamil Nadu",
+  "publishedDate": "2023-01-01",
+  "content": "Paddy in Tamil Nadu is grown in two main seasons: Kuruvai (June-July sowing, harvested around September-October) and Samba (August-September sowing, harvested around January-February). Kuruvai is a shorter-duration crop suited to areas with early monsoon water availability, while Samba is the main long-duration season in delta districts.\n\nLand preparation should include at least two ploughings followed by puddling once standing water is available, to reduce percolation losses and control weeds. Clayey and alluvial soils that retain water well are best suited for paddy; sandy soils need more frequent irrigation and are generally less suitable without careful water management.\n\nStanding water of 2-5 cm should be maintained through most vegetative growth, with a brief drainage period around active tillering in some management systems to encourage root development, followed by continuous shallow flooding through flowering. Water should be drained about 10 days before harvest to allow the field to firm up.\n\nCommon nutrient management follows a split application of nitrogen at basal, tillering, and panicle initiation stages, guided by the field's Soil Health Card recommendations rather than a fixed blanket dose, since soil nitrogen status varies considerably between fields."
+}

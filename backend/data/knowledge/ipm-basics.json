@@ -1,0 +1,15 @@
+{
+  "id": "ipm-basics",
+  "title": "Integrated Pest Management (IPM) — Core Principles",
+  "source": "ICAR general extension guidance",
+  "sourceUrl": "https://icar.org.in",
+  "organization": "Indian Council of Agricultural Research (ICAR)",
+  "category": "pest_management",
+  "crop": "",
+  "cropStage": "",
+  "topic": "IPM, pesticide reduction, biological control, monitoring",
+  "language": "en-IN",
+  "region": "India",
+  "publishedDate": "2021-11-01",
+  "content": "Integrated Pest Management (IPM) is an approach that combines multiple tactics — rather than relying on chemical pesticides alone — to keep pest populations below levels that cause economic damage, while minimizing cost, health risk, and environmental impact.\n\nCore IPM practices include regular field monitoring/scouting to detect pest buildup early (rather than spraying on a fixed calendar regardless of actual pest levels), use of pest-resistant or tolerant crop varieties where available, cultural practices such as crop rotation and timely sowing that disrupt pest life cycles, conservation of natural predators and parasitoids (for example, avoiding broad-spectrum insecticide use that also kills beneficial insects), use of pheromone traps or light traps for monitoring and mass trapping of certain pests, and biological or need-based chemical control only when monitoring shows pest levels have crossed an economic threshold.\n\nAn economic threshold is the pest density at which the cost of the damage the pest would cause exceeds the cost of control — spraying before this point wastes money and accelerates pesticide resistance, while waiting too long past it risks significant yield loss.\n\nBecause economic thresholds and recommended IPM tactics differ by crop and pest, farmers should consult crop-specific IPM guidance from their local Krishi Vigyan Kendra rather than applying a single generic pest-control routine across all crops."
+}

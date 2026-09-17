@@ -1,0 +1,15 @@
+{
+  "id": "cotton-bollworm",
+  "title": "Cotton Bollworm — Identification and Integrated Management",
+  "source": "ICAR general extension guidance",
+  "sourceUrl": "https://icar.org.in",
+  "organization": "Indian Council of Agricultural Research (ICAR)",
+  "category": "pest_management",
+  "crop": "cotton",
+  "cropStage": "flowering,boll formation",
+  "topic": "bollworm, insect pest, pesticide resistance",
+  "language": "en-IN",
+  "region": "India",
+  "publishedDate": "2022-07-01",
+  "content": "Bollworms (including American bollworm, pink bollworm, and spotted bollworm) are among the most damaging cotton pests, with larvae boring into squares, flowers, and bolls, causing them to shed or rot, directly reducing yield and lint quality.\n\nEarly signs include small round holes in squares/bolls with larval frass (excrement) visible near the entry point, and shedding of damaged squares and young bolls. Pink bollworm larvae specifically cause 'rosette flowers' (malformed, fused petals) before boll entry, which can be an earlier warning sign than boll damage itself.\n\nMonitoring with pheromone traps to track adult moth activity helps time interventions before larvae bore into bolls (once inside, larvae are largely protected from contact insecticides). Recommended IPM tactics include timely sowing to avoid pest-favorable periods, destruction of crop residue after harvest (since pink bollworm can survive in old bolls/residue), conservation of natural enemies, and use of recommended, rotated insecticide classes only when trap catches or field scouting indicate thresholds have been crossed — repeated use of the same insecticide class has led to resistance in bollworm populations in various regions, which is why rotation and threshold-based spraying (rather than fixed-calendar spraying) matters.\n\nBecause bollworm species, resistance patterns, and thresholds vary by region and season, farmers should confirm current local recommendations with their agricultural extension office rather than relying on a fixed historical spray schedule."
+}

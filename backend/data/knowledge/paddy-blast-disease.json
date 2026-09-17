@@ -1,0 +1,15 @@
+{
+  "id": "paddy-blast-disease",
+  "title": "Rice Blast Disease — Recognition and Management",
+  "source": "ICAR general plant pathology guidance",
+  "sourceUrl": "https://icar.org.in",
+  "organization": "Indian Council of Agricultural Research (ICAR)",
+  "category": "disease_management",
+  "crop": "paddy",
+  "cropStage": "vegetative,flowering",
+  "topic": "leaf blast, neck blast, fungal disease, spots on leaves",
+  "language": "en-IN",
+  "region": "India",
+  "publishedDate": "2022-06-01",
+  "content": "Rice blast, caused by the fungus Magnaporthe oryzae, is one of the most damaging rice diseases and can affect leaves, nodes, and the neck of the panicle. Leaf blast typically appears as small, diamond-shaped or spindle-shaped spots with grey or whitish centers and brown or reddish-brown borders. Under humid, cloudy weather with heavy dew, lesions can expand rapidly and coalesce, giving leaves a scorched appearance.\n\nNeck blast, which infects the base of the panicle, is especially damaging because it can cause the entire panicle to wilt and produce little or no grain, even when leaf symptoms were mild.\n\nConditions that favor blast include excessive nitrogen application (which produces soft, susceptible tissue), high humidity, prolonged leaf wetness, and dense planting that restricts airflow. Because blast can spread quickly under favorable weather, fields should be monitored regularly during the vegetative and flowering stages, particularly after cloudy or rainy spells.\n\nManagement approaches generally combine resistant/tolerant varieties where available, balanced nitrogen application rather than excess, adequate plant spacing for airflow, and timely use of a recommended fungicide when disease pressure is confirmed. Because blast can be confused with other leaf spots, a farmer noticing suspicious diamond-shaped lesions, especially spreading quickly, should get the diagnosis confirmed by a local agricultural extension officer or Krishi Vigyan Kendra before large-scale fungicide use, since treatment choice depends on confirmed diagnosis and local resistance patterns."
+}

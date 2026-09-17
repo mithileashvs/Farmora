@@ -1,0 +1,15 @@
+{
+  "id": "tomato-leaf-curl-virus",
+  "title": "Tomato Leaf Curl — Common Causes and Field Management",
+  "source": "ICAR / State agricultural extension general guidance",
+  "sourceUrl": "https://icar.org.in",
+  "organization": "Indian Council of Agricultural Research (ICAR)",
+  "category": "disease_management",
+  "crop": "tomato",
+  "cropStage": "vegetative",
+  "topic": "leaf curling, yellowing, whitefly, viral disease, nutrient deficiency",
+  "language": "en-IN",
+  "region": "India",
+  "publishedDate": "2022-08-01",
+  "content": "Curling of tomato leaves has more than one common cause, and distinguishing between them matters for the right response. Tomato Leaf Curl Virus (ToLCV), spread by whitefly, typically causes upward curling and crinkling of younger leaves, stunted plant growth, yellowing along leaf margins, and reduced fruit set; symptoms tend to appear first on new growth and spread across the plant over one to two weeks.\n\nLeaf curling can also result from non-viral causes: physiological curling from heat/water stress (usually more uniform, affecting older leaves too, and reversible once conditions improve), herbicide drift, or nutrient imbalances such as potassium deficiency (which can also show marginal yellowing/browning on older leaves).\n\nBecause the virus is whitefly-transmitted, managing whitefly populations is central to prevention: yellow sticky traps for monitoring, reflective mulches, avoiding planting near heavily infested fields, and timely removal of severely infected plants to reduce the source of further spread. There is no cure once a plant is virus-infected — management is about prevention and limiting spread, primarily through vector (whitefly) control and use of tolerant varieties where available.\n\nBecause several different problems can produce similar-looking curling, especially from a single photo, a farmer should look for supporting signs (presence of whiteflies on the underside of leaves, whether curling affects only new growth or the whole plant, recent weather/heat stress, recent herbicide use nearby) and consult the local Krishi Vigyan Kendra or agricultural extension officer for field-level confirmation before committing to a treatment plan."
+}

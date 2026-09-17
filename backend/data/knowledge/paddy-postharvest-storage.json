@@ -1,0 +1,15 @@
+{
+  "id": "paddy-postharvest-storage",
+  "title": "Post-Harvest Handling and Storage of Paddy",
+  "source": "ICAR general post-harvest technology guidance",
+  "sourceUrl": "https://icar.org.in",
+  "organization": "Indian Council of Agricultural Research (ICAR)",
+  "category": "post_harvest",
+  "crop": "paddy",
+  "cropStage": "post-harvest",
+  "topic": "drying, storage, grain moisture, pest control in storage",
+  "language": "en-IN",
+  "region": "India",
+  "publishedDate": "2021-09-01",
+  "content": "Proper drying is the single most important step in paddy post-harvest handling: freshly harvested paddy typically has 20-25% moisture content and should be dried down to about 12-14% moisture before storage to prevent fungal growth, discoloration, and quality loss. Sun drying on a clean threshing floor with periodic turning is the common small-farm method; grain should be spread in a thin, even layer rather than a thick pile, which dries unevenly and risks localized moisture pockets.\n\nGrain moisture can be roughly checked by the traditional bite/hardness test, but a moisture meter, where available, gives a more reliable reading, especially since over-dried grain (below about 12%) can lead to excessive breakage during milling.\n\nFor storage, grain should be kept in a clean, dry, well-ventilated space, off the floor (on pallets or raised platforms) to reduce moisture uptake from the ground, and away from previous season's grain residue that could harbor storage pests. Storage bags/bins should be checked periodically for signs of insect infestation (small holes, webbing, live insects, unusual smell) and for any moisture re-entry, since even properly dried grain can pick up moisture again in humid storage conditions or leaking roofs.\n\nWhere available, hermetic (airtight) storage bags or bins significantly reduce storage insect damage compared to ordinary jute or woven sacks, by limiting the oxygen available to insect pests, and are increasingly recommended by extension services for small-farm storage."
+}

@@ -1,0 +1,15 @@
+{
+  "id": "drip-irrigation-vegetables",
+  "title": "Drip Irrigation for Vegetable Crops — Benefits and Setup Basics",
+  "source": "Tamil Nadu Agricultural University — general irrigation guidance",
+  "sourceUrl": "https://www.tnau.ac.in",
+  "organization": "Tamil Nadu Agricultural University (TNAU)",
+  "category": "irrigation",
+  "crop": "vegetables",
+  "cropStage": "",
+  "topic": "drip irrigation, water saving, fertigation",
+  "language": "en-IN",
+  "region": "Tamil Nadu",
+  "publishedDate": "2022-02-01",
+  "content": "Drip irrigation delivers water slowly and directly to the root zone through emitters along a lateral pipe, rather than flooding the whole field. For widely spaced row crops such as tomato, brinjal, chilli, and other vegetables, drip systems commonly reduce water use by 30-50% compared to flood irrigation, while also reducing weed growth between rows (since only the crop row is wetted) and reducing conditions that favor some fungal leaf diseases (since foliage stays drier than with overhead irrigation).\n\nA basic system consists of a water source, a filter (to prevent emitter clogging — critical, since most drip system failures trace back to inadequate filtration), a pressure regulator if needed, mainline and sub-main pipes, and lateral lines with emitters spaced to match plant spacing.\n\nDrip systems also allow fertigation — dissolving water-soluble fertilizer into the irrigation water so nutrients are delivered directly to the root zone in smaller, more frequent doses, which can improve nutrient use efficiency compared to broadcasting solid fertilizer.\n\nInitial setup cost is higher than flood irrigation, but many state horticulture/agriculture departments offer subsidies for drip system installation for eligible small and marginal farmers; farmers considering the switch should check current subsidy eligibility with their local agriculture department before purchase."
+}

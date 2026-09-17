@@ -1,0 +1,15 @@
+{
+  "id": "soil-health-card-npk",
+  "title": "Understanding Soil Health Card Nutrient Ratings (N, P, K)",
+  "source": "Soil Health Card Scheme, Department of Agriculture & Farmers Welfare",
+  "sourceUrl": "https://soilhealth.dac.gov.in",
+  "organization": "Government of India — Department of Agriculture & Farmers Welfare",
+  "category": "soil_management",
+  "crop": "",
+  "cropStage": "",
+  "topic": "soil health card, nitrogen, phosphorus, potassium, fertilizer dosage",
+  "language": "en-IN",
+  "region": "India",
+  "publishedDate": "2021-01-01",
+  "content": "The Soil Health Card scheme rates a field's available Nitrogen (N), Phosphorus (P), and Potassium (K) as Low, Medium, or High, based on soil test values measured in kilograms per hectare (kg/ha). Commonly used reference ranges are: Nitrogen — Low below 280 kg/ha, Medium 280-560 kg/ha, High above 560 kg/ha. Phosphorus — Low below 10 kg/ha, Medium 10-25 kg/ha, High above 25 kg/ha. Potassium — Low below 110 kg/ha, Medium 110-280 kg/ha, High above 280 kg/ha.\n\nThese ratings are meant to guide fertilizer decisions: fields rated Low for a nutrient generally need a full recommended dose of that nutrient for the intended crop, Medium-rated fields typically need a reduced or maintenance dose, and High-rated fields often need little to no additional application of that nutrient, since over-application wastes money, can harm soil health over time, and in the case of nitrogen can contribute to lodging and disease susceptibility in some crops.\n\nBecause exact fertilizer recommendations also depend on the specific crop, target yield, and local soil type, a Soil Health Card's N/P/K ratings should be read together with crop-specific fertilizer recommendations from the local agricultural department or Krishi Vigyan Kendra, rather than applied as a single universal formula across all crops."
+}

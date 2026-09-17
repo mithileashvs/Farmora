@@ -1,0 +1,15 @@
+{
+  "id": "groundnut-leaf-spot",
+  "title": "Groundnut Leaf Spot Diseases — Tikka Disease",
+  "source": "ICAR general plant pathology guidance",
+  "sourceUrl": "https://icar.org.in",
+  "organization": "Indian Council of Agricultural Research (ICAR)",
+  "category": "disease_management",
+  "crop": "groundnut",
+  "cropStage": "vegetative",
+  "topic": "leaf spot, tikka disease, fungal infection",
+  "language": "en-IN",
+  "region": "India",
+  "publishedDate": "2022-05-01",
+  "content": "Groundnut (peanut) leaf spot, commonly called Tikka disease, is caused by two fungal pathogens (early leaf spot and late leaf spot) that produce circular to irregular brown-to-black spots on leaves, often surrounded by a yellow halo. In advanced stages, spots merge, leaves turn yellow and drop prematurely, which can significantly reduce pod filling and yield if it occurs during the pod development stage.\n\nWarm, humid weather with intermittent rain favors disease spread, and infection generally starts on lower/older leaves before moving upward through the canopy.\n\nManagement typically combines crop rotation (avoiding groundnut after groundnut in the same field for at least one season), field sanitation (removing infected crop debris after harvest, since the fungus can survive on residue), and, when disease pressure is high, a recommended fungicide spray schedule starting at first symptom appearance rather than waiting for widespread spotting. Wider plant spacing to improve airflow and reduce leaf wetness duration also helps limit spread.\n\nEarly and consistent field monitoring, particularly of lower leaves from about 30 days after sowing onward, allows earlier intervention, which is generally more effective and lower-cost than treating an already-advanced outbreak."
+}

@@ -1,0 +1,518 @@
+<!DOCTYPE html>
+<html lang="ta">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="theme-color" content="#234D2C">
+<title>Farmora — AI Farming Assistant</title>
+<link rel="manifest" id="manifestLink">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Roboto+Slab:wght@500;700&family=Noto+Sans+Tamil:wght@400;500;600&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --soil: #234D2C; --soil-light: #3A6B45;
+    --turmeric: #E8A33D; --turmeric-dark: #C9822A;
+    --paddy: #2F8F4E; --paddy-light: #E8F5EC; --paddy-dark: #1F5C33;
+    --husk: #F4F8F4; --husk-dark: #E4EEE4;
+    --clay: #C0392B; --ink: #1F2E22; --white: #FFFFFF; --sky: #4A90A4;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { height: 100%; font-family: 'Inter', 'Noto Sans Tamil', sans-serif; background: var(--husk); color: var(--ink); }
+  body { display: flex; height: 100vh; overflow: hidden; }
+  ::-webkit-scrollbar { width: 6px; } ::-webkit-scrollbar-thumb { background: #cdd9cd; border-radius: 3px; }
+
+  .sidebar { position: fixed; top: 0; left: 0; bottom: 0; width: 230px; background: var(--soil); color: var(--husk); display: flex; flex-direction: column; transform: translateX(-100%); transition: transform 0.25s ease; z-index: 50; }
+  .sidebar.open { transform: translateX(0); }
+  .sidebar-header { padding: 20px 18px 16px; display: flex; align-items: center; gap: 10px; border-bottom: 1px solid rgba(255,255,255,0.1); }
+  .sidebar-header .icon { width: 36px; height: 36px; background: var(--turmeric); border-radius: 10px; display: flex; align-items: center; justify-content: center; font-size: 19px; }
+  .sidebar-header .title { font-family: 'Roboto Slab', serif; font-size: 17px; font-weight: 700; }
+  .sidebar-header .subtitle { font-size: 10.5px; color: #B8D4BE; margin-top: 1px; }
+  .nav-list { flex: 1; overflow-y: auto; padding: 10px; }
+  .nav-item { display: flex; align-items: center; gap: 12px; padding: 11px 12px; border-radius: 10px; color: #D5E6D8; cursor: pointer; margin-bottom: 2px; background: transparent; border: none; width: 100%; font-family: inherit; text-align: left; font-size: 14px; font-weight: 500; }
+  .nav-item .emoji { font-size: 16px; width: 20px; text-align: center; }
+  .nav-item:hover { background: rgba(255,255,255,0.06); }
+  .nav-item.active { background: var(--paddy-dark); color: white; font-weight: 600; }
+  .sidebar-profile { display: flex; align-items: center; gap: 10px; padding: 12px 16px; border-top: 1px solid rgba(255,255,255,0.1); }
+  .sidebar-profile .avatar { width: 34px; height: 34px; border-radius: 50%; background: var(--turmeric); color: var(--soil); display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 14px; flex-shrink: 0; }
+  .sidebar-profile .name { font-size: 13px; font-weight: 600; }
+  .sidebar-profile .loc { font-size: 10.5px; color: #A8C4AD; }
+  .sidebar-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.4); z-index: 40; display: none; }
+  .sidebar-overlay.show { display: block; }
+  .install-btn { margin: 8px 12px; background: var(--turmeric); color: var(--soil); border: none; border-radius: 8px; padding: 9px; font-size: 12.5px; font-weight: 700; cursor: pointer; display: none; align-items: center; justify-content: center; gap: 6px; }
+  .install-btn.show { display: flex; }
+
+  .topbar { position: fixed; top: 0; left: 0; right: 0; height: 52px; background: var(--soil); color: white; display: flex; align-items: center; gap: 12px; padding: 0 14px; z-index: 30; }
+  .hamburger { background: none; border: none; color: white; font-size: 22px; cursor: pointer; padding: 4px; }
+  .topbar-title { font-family: 'Roboto Slab', serif; font-weight: 700; font-size: 16px; }
+
+  .app-shell { display: flex; flex: 1; margin-top: 52px; width: 100%; height: calc(100vh - 52px); }
+  .center-col { flex: 1; display: flex; flex-direction: column; min-width: 0; overflow: hidden; }
+  .right-col { width: 300px; flex-shrink: 0; background: var(--husk); border-left: 1px solid var(--husk-dark); padding: 16px; overflow-y: auto; display: none; }
+
+  .hero { background: linear-gradient(180deg, #DCEFE0 0%, #EAF6EC 100%); padding: 18px 22px; border-bottom: 1px solid var(--husk-dark); flex-shrink: 0; }
+  .hero-greeting { font-family: 'Roboto Slab', serif; font-size: 19px; font-weight: 700; color: var(--paddy-dark); }
+  .hero-sub { font-size: 12.5px; color: var(--soil-light); margin-top: 2px; }
+
+  .screen { display: none; padding: 18px; overflow-y: auto; flex: 1; }
+  .screen.active { display: block; }
+  .screen-title { font-family: 'Roboto Slab', serif; font-size: 19px; font-weight: 700; color: var(--soil); margin-bottom: 4px; }
+  .screen-subtitle { font-size: 12.5px; color: var(--soil-light); margin-bottom: 16px; }
+  .card { background: var(--white); border-radius: 12px; padding: 16px; box-shadow: 0 1px 4px rgba(35,77,44,0.08); margin-bottom: 12px; border-left: 3px solid var(--paddy); }
+  .card h3 { font-size: 15px; margin-bottom: 6px; color: var(--soil); }
+  .card p { font-size: 13.5px; line-height: 1.5; }
+  .tag { display: inline-block; background: var(--husk-dark); color: var(--soil-light); font-size: 11px; padding: 3px 8px; border-radius: 6px; margin-right: 6px; margin-top: 6px; font-weight: 600; }
+
+  .chat-wrap { flex: 1; display: flex; flex-direction: column; overflow: hidden; }
+  .chat-area { flex: 1; overflow-y: auto; padding: 18px 22px; display: flex; flex-direction: column; gap: 14px; background: var(--husk); }
+  .msg-row { display: flex; gap: 10px; max-width: 85%; }
+  .msg-row.user { align-self: flex-end; flex-direction: row-reverse; }
+  .msg-avatar { width: 30px; height: 30px; border-radius: 50%; flex-shrink: 0; display: flex; align-items: center; justify-content: center; font-size: 15px; }
+  .msg-avatar.bot { background: var(--paddy-dark); } .msg-avatar.user { background: var(--turmeric); }
+  .msg-bubble-col { display: flex; flex-direction: column; gap: 3px; }
+  .msg-row.user .msg-bubble-col { align-items: flex-end; }
+  .msg { padding: 12px 16px; border-radius: 14px; font-size: 14.5px; line-height: 1.55; animation: rise 0.25s ease; }
+  @keyframes rise { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
+  .msg.bot { background: var(--white); border-top-left-radius: 4px; box-shadow: 0 1px 4px rgba(35,77,44,0.08); }
+  .msg.user { background: var(--paddy-light); color: var(--soil); border-top-right-radius: 4px; }
+  .msg-photos { display: flex; gap: 6px; margin-bottom: 8px; flex-wrap: wrap; }
+  .msg-photos img { width: 70px; height: 70px; object-fit: cover; border-radius: 8px; }
+  .msg-time { font-size: 10.5px; color: #8FA893; padding: 0 4px; }
+  .msg-checklist { list-style: none; margin: 8px 0 0; padding: 0; }
+  .msg-checklist li { display: flex; gap: 6px; margin-bottom: 5px; align-items: flex-start; }
+  .msg-checklist li::before { content: '✅'; font-size: 12px; margin-top: 1px; }
+  .msg-actions { display: flex; align-items: center; gap: 12px; margin-top: 8px; }
+  .replay { display: inline-flex; align-items: center; gap: 4px; font-size: 11.5px; color: var(--turmeric-dark); cursor: pointer; font-weight: 600; }
+  .feedback-btns { display: flex; gap: 6px; margin-left: auto; }
+  .fb-btn { background: none; border: 1px solid var(--husk-dark); border-radius: 6px; padding: 3px 7px; font-size: 12px; cursor: pointer; }
+  .fb-btn.selected { background: var(--paddy-light); border-color: var(--paddy); }
+  .confidence-badge { display: inline-block; font-size: 10.5px; font-weight: 700; padding: 3px 9px; border-radius: 6px; margin-bottom: 8px; }
+  .confidence-high { background: #E1F5E6; color: var(--paddy-dark); }
+  .confidence-medium { background: #FDF1DC; color: var(--turmeric-dark); }
+  .confidence-low { background: #FBE4E1; color: var(--clay); }
+  .sources-block { margin-top: 8px; border-top: 1px dashed var(--husk-dark); padding-top: 8px; }
+  .sources-toggle { background: none; border: none; padding: 0; font-size: 11.5px; font-weight: 600; color: var(--paddy-dark); cursor: pointer; }
+  .sources-list { margin-top: 6px; display: flex; flex-direction: column; gap: 6px; }
+  .source-item { background: var(--husk); border-radius: 8px; padding: 7px 10px; }
+  .source-title a, .source-title { font-size: 12px; font-weight: 600; color: var(--soil); text-decoration: none; }
+  .source-title a:hover { text-decoration: underline; }
+  .source-org { font-size: 10.5px; color: var(--soil-light); margin-top: 1px; }
+  .typing-indicator { align-self: flex-start; background: var(--white); padding: 13px 17px; border-radius: 14px; border-top-left-radius: 4px; box-shadow: 0 1px 4px rgba(35,77,44,0.08); display: flex; gap: 4px; margin-left: 40px; }
+  .typing-indicator span { width: 7px; height: 7px; border-radius: 50%; background: var(--paddy); animation: blink 1.2s infinite; }
+  .typing-indicator span:nth-child(2) { animation-delay: 0.2s; } .typing-indicator span:nth-child(3) { animation-delay: 0.4s; }
+  @keyframes blink { 0%, 60%, 100% { opacity: 0.3; } 30% { opacity: 1; } }
+
+  .hero-top-row { display: flex; justify-content: space-between; align-items: flex-start; gap: 10px; }
+  .lang-pill-toggle { display: flex; background: rgba(255,255,255,0.6); border-radius: 16px; padding: 3px; flex-shrink: 0; }
+  .lang-pill { border: none; background: none; padding: 6px 12px; border-radius: 13px; font-size: 12px; font-weight: 700; color: var(--soil-light); cursor: pointer; font-family: inherit; }
+  .lang-pill.active { background: var(--turmeric); color: white; }
+  .location-pill { background: rgba(255,255,255,0.6); border: none; border-radius: 12px; padding: 5px 10px; font-size: 10.5px; font-weight: 600; color: var(--soil-light); cursor: pointer; font-family: inherit; }
+
+  .active-mode-bar { display: flex; align-items: center; justify-content: space-between; padding: 8px 22px; background: var(--paddy-light); border-bottom: 1px solid var(--husk-dark); font-size: 12.5px; font-weight: 600; color: var(--paddy-dark); flex-shrink: 0; }
+  .active-mode-bar button { background: none; border: none; color: var(--paddy-dark); font-size: 11.5px; font-weight: 700; cursor: pointer; font-family: inherit; opacity: 0.75; }
+
+  .attach-wrap { position: relative; }
+  .attach-menu { display: none; position: absolute; bottom: 52px; left: 0; background: var(--white); border-radius: 14px; box-shadow: 0 6px 24px rgba(35,77,44,0.2); padding: 8px; width: 250px; z-index: 25; }
+  .attach-menu.show { display: block; animation: rise 0.15s ease; }
+  .attach-option { display: flex; align-items: center; gap: 12px; width: 100%; background: none; border: none; padding: 10px 8px; border-radius: 10px; cursor: pointer; font-family: inherit; text-align: left; }
+  .attach-option:hover { background: var(--husk); }
+  .ao-icon { width: 34px; height: 34px; border-radius: 9px; display: flex; align-items: center; justify-content: center; font-size: 16px; flex-shrink: 0; }
+  .soil-icon { background: #F0E4D4; } .leaf-icon { background: var(--paddy-light); } .photo-icon { background: var(--husk-dark); }
+  .ao-title { font-size: 13px; font-weight: 700; color: var(--soil); }
+  .ao-sub { font-size: 11px; color: var(--soil-light); margin-top: 1px; }
+
+  .suggestions-bar { display: flex; gap: 8px; padding: 10px 22px 0; overflow-x: auto; }
+  .suggestion-chip { flex-shrink: 0; background: var(--paddy-light); border: none; color: var(--paddy-dark); border-radius: 16px; padding: 8px 14px; font-size: 12.5px; font-family: inherit; cursor: pointer; font-weight: 600; white-space: nowrap; }
+
+  .image-preview-bar { display: none; padding: 10px 22px; background: var(--white); border-top: 1px solid var(--husk-dark); flex-wrap: wrap; gap: 8px; align-items: center; }
+  .image-preview-bar.show { display: flex; }
+  .preview-thumb { position: relative; width: 46px; height: 46px; }
+  .preview-thumb img { width: 100%; height: 100%; object-fit: cover; border-radius: 8px; }
+  .preview-thumb .rm { position: absolute; top: -5px; right: -5px; background: var(--clay); color: white; border: none; width: 16px; height: 16px; border-radius: 50%; font-size: 10px; cursor: pointer; line-height: 1; }
+  .preview-label { font-size: 11.5px; color: var(--soil-light); }
+  .add-more-btn { width: 46px; height: 46px; border: 1.5px dashed var(--husk-dark); border-radius: 8px; background: none; color: var(--soil-light); font-size: 18px; cursor: pointer; }
+
+  .input-bar { display: flex; align-items: center; gap: 8px; padding: 14px 22px; background: var(--white); border-top: 1px solid var(--husk-dark); flex-shrink: 0; }
+  #textInput { flex: 1; border: 1.5px solid var(--husk-dark); border-radius: 22px; padding: 11px 16px; font-size: 14.5px; font-family: inherit; outline: none; min-width: 0; background: var(--husk); }
+  #textInput:focus { border-color: var(--paddy); background: white; }
+  .icon-btn { width: 40px; height: 40px; border-radius: 50%; border: none; display: flex; align-items: center; justify-content: center; cursor: pointer; flex-shrink: 0; }
+  .icon-btn svg { width: 18px; height: 18px; }
+  #sendBtn { background: var(--paddy); width: 44px; height: 44px; } #sendBtn svg { fill: white; width: 19px; height: 19px; }
+  #micBtn, #cameraBtn { background: var(--husk); } #micBtn svg, #cameraBtn svg { fill: var(--soil-light); }
+  #micBtn.listening { background: var(--clay); animation: pulse 1s infinite; } #micBtn.listening svg { fill: white; }
+  @keyframes pulse { 0% { box-shadow: 0 0 0 0 rgba(192,57,43,0.5); } 70% { box-shadow: 0 0 0 12px rgba(192,57,43,0); } 100% { box-shadow: 0 0 0 0 rgba(192,57,43,0); } }
+  .disclaimer { text-align: center; font-size: 10.5px; color: #9AAE9D; padding: 0 0 10px; background: var(--white); }
+  #fileInput { display: none; }
+
+  .widget-title { font-size: 13px; font-weight: 700; color: var(--soil); margin-bottom: 10px; }
+  .widget-card { background: var(--white); border-radius: 14px; padding: 15px; margin-bottom: 14px; box-shadow: 0 1px 4px rgba(35,77,44,0.06); }
+  .quick-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; }
+  .quick-item { display: flex; flex-direction: column; align-items: center; gap: 5px; background: var(--husk); border-radius: 10px; padding: 10px 4px; cursor: pointer; border: none; font-family: inherit; }
+  .quick-item .qi-icon { width: 30px; height: 30px; border-radius: 8px; background: var(--paddy-light); display: flex; align-items: center; justify-content: center; font-size: 15px; }
+  .quick-item .qi-label { font-size: 10px; color: var(--soil-light); font-weight: 600; text-align: center; }
+  .weather-mini-temp { font-family: 'Roboto Slab', serif; font-size: 26px; font-weight: 700; color: var(--soil); }
+  .weather-mini-desc { font-size: 12px; color: var(--soil-light); margin-top: 2px; }
+  .widget-link { font-size: 11.5px; color: var(--paddy); font-weight: 600; margin-top: 10px; display: inline-block; cursor: pointer; }
+  .market-mini-row { display: flex; justify-content: space-between; padding: 7px 0; border-bottom: 1px solid var(--husk-dark); font-size: 12.5px; }
+  .demo-badge-sm { background: var(--clay); color: white; font-size: 9px; font-weight: 700; padding: 2px 6px; border-radius: 5px; }
+  .trend-up { color: var(--paddy); font-weight: 700; font-size: 11.5px; } .trend-down { color: var(--clay); font-weight: 700; font-size: 11.5px; }
+
+  .dash-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 12px; }
+  .dash-stat { background: var(--white); border-radius: 12px; padding: 14px; box-shadow: 0 1px 4px rgba(35,77,44,0.08); }
+  .dash-stat .num { font-family: 'Roboto Slab', serif; font-size: 22px; font-weight: 700; color: var(--paddy); }
+  .dash-stat .lbl { font-size: 11.5px; color: var(--soil-light); margin-top: 2px; }
+  .quick-actions { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 10px; }
+  .quick-btn { background: var(--paddy); color: white; border: none; padding: 10px 14px; border-radius: 10px; font-size: 13px; font-weight: 600; cursor: pointer; font-family: inherit; }
+  .weather-search { display: flex; gap: 8px; margin-bottom: 14px; }
+  .weather-search input { flex: 1; border: 1.5px solid var(--husk-dark); border-radius: 10px; padding: 10px 12px; font-size: 13.5px; font-family: inherit; }
+  .weather-search button { background: var(--paddy); border: none; border-radius: 10px; padding: 0 16px; font-weight: 700; cursor: pointer; color: white; font-family: inherit; }
+  .weather-hero-full { background: linear-gradient(135deg, var(--sky), #35707F); color: white; border-radius: 14px; padding: 20px; margin-bottom: 14px; }
+  .weather-hero-full .temp { font-family: 'Roboto Slab', serif; font-size: 40px; font-weight: 700; }
+  .forecast-row { display: flex; gap: 8px; overflow-x: auto; }
+  .forecast-day { background: var(--white); border-radius: 10px; padding: 10px 14px; text-align: center; min-width: 70px; box-shadow: 0 1px 4px rgba(35,77,44,0.08); }
+  .weather-loading { text-align: center; padding: 30px; color: var(--soil-light); font-size: 13px; }
+  .demo-badge { background: var(--clay); color: white; font-size: 10.5px; font-weight: 700; padding: 3px 9px; border-radius: 6px; display: inline-block; margin-bottom: 10px; }
+  .market-table { width: 100%; border-collapse: collapse; background: var(--white); border-radius: 12px; overflow: hidden; box-shadow: 0 1px 4px rgba(35,77,44,0.08); }
+  .market-table th { background: var(--soil); color: white; font-size: 11.5px; padding: 10px 12px; text-align: left; }
+  .market-table td { padding: 10px 12px; font-size: 13px; border-bottom: 1px solid var(--husk-dark); }
+  .faq-item { background: var(--white); border-radius: 10px; margin-bottom: 8px; overflow: hidden; box-shadow: 0 1px 4px rgba(35,77,44,0.08); }
+  .faq-q { padding: 13px 15px; font-size: 13.5px; font-weight: 600; cursor: pointer; display: flex; justify-content: space-between; color: var(--soil); }
+  .faq-a { padding: 0 15px; max-height: 0; overflow: hidden; transition: all 0.2s; font-size: 13px; line-height: 1.5; }
+  .faq-item.open .faq-a { padding: 0 15px 14px; max-height: 200px; }
+  .alert-item { background: var(--white); border-radius: 10px; padding: 13px 15px; margin-bottom: 8px; display: flex; gap: 10px; box-shadow: 0 1px 4px rgba(35,77,44,0.08); }
+  .alert-item.warn { border-left: 3px solid var(--clay); } .alert-item.info { border-left: 3px solid var(--sky); } .alert-item.good { border-left: 3px solid var(--paddy); }
+  .alert-text .t { font-weight: 600; margin-bottom: 2px; color: var(--soil); font-size: 13px; }
+  .setting-group { background: var(--white); border-radius: 12px; padding: 14px 16px; margin-bottom: 12px; box-shadow: 0 1px 4px rgba(35,77,44,0.08); }
+  .setting-group label { font-size: 12px; font-weight: 600; color: var(--soil-light); display: block; margin-bottom: 6px; }
+  .setting-group input, .setting-group select { width: 100%; border: 1.5px solid var(--husk-dark); border-radius: 8px; padding: 9px 12px; font-size: 14px; font-family: inherit; margin-bottom: 12px; }
+  .lang-toggle-row { display: flex; gap: 8px; }
+  .lang-btn { flex: 1; padding: 9px; border-radius: 8px; border: 1.5px solid var(--paddy); background: white; color: var(--paddy); font-weight: 600; font-size: 13px; cursor: pointer; font-family: inherit; }
+  .lang-btn.active { background: var(--paddy); color: white; }
+  .danger-btn { background: none; border: 1.5px solid var(--clay); color: var(--clay); padding: 9px 14px; border-radius: 8px; font-size: 13px; font-weight: 600; cursor: pointer; font-family: inherit; width: 100%; }
+  .scheme-result { background: var(--paddy-light); border-radius: 10px; padding: 12px 14px; margin-bottom: 8px; }
+  .scheme-result h4 { font-size: 13.5px; color: var(--paddy-dark); margin-bottom: 4px; }
+  .scheme-result p { font-size: 12.5px; color: var(--soil); line-height: 1.4; }
+  .match-btn { background: var(--paddy); color: white; border: none; padding: 11px; border-radius: 10px; font-size: 14px; font-weight: 700; cursor: pointer; font-family: inherit; width: 100%; margin-top: 4px; }
+
+  /* ============ ONBOARDING ============ */
+  .onboarding-overlay {
+    position: fixed; inset: 0; z-index: 200;
+    background: linear-gradient(160deg, var(--soil) 0%, var(--paddy-dark) 100%);
+    display: flex; align-items: center; justify-content: center;
+    padding: 20px;
+  }
+  .onboard-step { display: none; width: 100%; max-width: 380px; }
+  .onboard-step.active { display: block; animation: rise 0.3s ease; }
+  .onboard-card { background: var(--white); border-radius: 20px; padding: 32px 26px; text-align: center; box-shadow: 0 10px 40px rgba(0,0,0,0.25); }
+  .onboard-logo { font-size: 42px; margin-bottom: 8px; }
+  .onboard-title { font-family: 'Roboto Slab', serif; font-size: 21px; font-weight: 700; color: var(--soil); }
+  .onboard-sub { font-size: 13px; color: var(--soil-light); margin-top: 4px; margin-bottom: 22px; }
+  .auth-tabs { display: flex; background: var(--husk); border-radius: 10px; padding: 4px; margin-bottom: 18px; }
+  .auth-tab { flex: 1; border: none; background: none; padding: 9px; border-radius: 8px; font-size: 13.5px; font-weight: 600; color: var(--soil-light); cursor: pointer; font-family: inherit; }
+  .auth-tab.active { background: var(--paddy); color: white; }
+  .onboard-input { width: 100%; border: 1.5px solid var(--husk-dark); border-radius: 10px; padding: 12px 14px; font-size: 14px; font-family: inherit; margin-bottom: 12px; outline: none; }
+  .onboard-input:focus { border-color: var(--paddy); }
+  .onboard-note { font-size: 11px; color: #9AAE9D; margin-bottom: 16px; line-height: 1.4; }
+  .onboard-btn { width: 100%; background: var(--paddy); color: white; border: none; padding: 13px; border-radius: 10px; font-size: 15px; font-weight: 700; cursor: pointer; font-family: inherit; }
+  .onboard-btn-outline { background: white; color: var(--paddy); border: 1.5px solid var(--paddy); margin-bottom: 4px; }
+  .onboard-skip { display: block; margin: 14px auto 0; background: none; border: none; color: var(--soil-light); font-size: 12.5px; font-weight: 600; cursor: pointer; font-family: inherit; text-decoration: underline; }
+  .onboard-or { display: flex; align-items: center; gap: 10px; margin: 14px 0; color: #B8C4B8; font-size: 11px; }
+  .onboard-or::before, .onboard-or::after { content: ''; flex: 1; height: 1px; background: var(--husk-dark); }
+  .lang-option-btn { width: 100%; border: 1.5px solid var(--husk-dark); background: white; border-radius: 12px; padding: 16px; margin-bottom: 12px; cursor: pointer; display: flex; flex-direction: column; align-items: center; gap: 2px; font-family: inherit; }
+  .lang-option-btn:hover { border-color: var(--paddy); background: var(--paddy-light); }
+  .lo-native { font-size: 18px; font-weight: 700; color: var(--soil); }
+  .lo-sub { font-size: 12px; color: var(--soil-light); }
+  .auth-error { color: var(--clay); font-size: 12px; margin-bottom: 10px; display: none; }
+  .auth-error.show { display: block; }
+
+  @media (min-width: 1000px) {
+    .sidebar { transform: translateX(0); position: sticky; }
+    .sidebar-overlay { display: none !important; } .hamburger { display: none; }
+    .app-shell { margin-left: 230px; margin-top: 0; height: 100vh; width: calc(100% - 230px); }
+    .topbar { display: none; }
+    .right-col { display: block; }
+  }
+</style>
+</head>
+<body>
+
+<!-- ============ ONBOARDING OVERLAY ============ -->
+<div id="onboardingOverlay" class="onboarding-overlay">
+
+  <!-- Step 1: Login / Sign up -->
+  <div class="onboard-step active" id="onboardStep1">
+    <div class="onboard-card">
+      <div class="onboard-logo">🌾</div>
+      <div class="onboard-title">Farmora</div>
+      <div class="onboard-sub">Your AI Farming Assistant</div>
+      <div class="auth-tabs">
+        <button class="auth-tab active" id="authTabSignup">Sign Up</button>
+        <button class="auth-tab" id="authTabLogin">Login</button>
+      </div>
+      <input type="text" id="authName" class="onboard-input" placeholder="Full name">
+      <input type="tel" id="authPhone" class="onboard-input" placeholder="Phone number">
+      <input type="password" id="authPassword" class="onboard-input" placeholder="Password">
+      <div class="onboard-note" id="authNote">Creates a local profile on this device — no data leaves your phone.</div>
+      <button class="onboard-btn" id="authSubmitBtn">Create Account</button>
+    </div>
+  </div>
+
+  <!-- Step 2: Language -->
+  <div class="onboard-step" id="onboardStep2">
+    <div class="onboard-card">
+      <div class="onboard-logo">🗣️</div>
+      <div class="onboard-title" id="langStepTitle">Choose your language</div>
+      <div class="onboard-sub">மொழியை தேர்ந்தெடுக்கவும்</div>
+      <button class="lang-option-btn" data-onboard-lang="ta-IN">
+        <span class="lo-native">தமிழ்</span><span class="lo-sub">Tamil</span>
+      </button>
+      <button class="lang-option-btn" data-onboard-lang="en-IN">
+        <span class="lo-native">English</span><span class="lo-sub">ஆங்கிலம்</span>
+      </button>
+      <div class="onboard-note">More Indian languages coming soon</div>
+    </div>
+  </div>
+
+  <!-- Step 3: Location -->
+  <div class="onboard-step" id="onboardStep3">
+    <div class="onboard-card">
+      <div class="onboard-logo">📍</div>
+      <div class="onboard-title" id="locStepTitle">Set your location</div>
+      <div class="onboard-sub" id="locStepSub">For weather, alerts, and local advice</div>
+      <button class="onboard-btn onboard-btn-outline" id="onboardGeoBtn">📍 Use my current location</button>
+      <div class="onboard-or"><span>or</span></div>
+      <input type="text" id="onboardLocationInput" class="onboard-input" placeholder="Type village / district / city">
+      <input type="text" id="onboardCropInput" class="onboard-input" placeholder="Primary crop (optional)">
+      <button class="onboard-btn" id="locContinueBtn">Continue</button>
+      <button class="onboard-skip" id="locSkipBtn">Skip for now</button>
+    </div>
+  </div>
+
+</div>
+
+<div class="sidebar-overlay" id="sidebarOverlay"></div>
+<div class="sidebar" id="sidebar">
+  <div class="sidebar-header">
+    <div class="icon">🌾</div>
+    <div><div class="title">Farmora</div><div class="subtitle">Your Farming Assistant</div></div>
+  </div>
+  <div class="nav-list">
+    <button class="nav-item active" data-screen="chat"><span class="emoji">💬</span> Chat</button>
+    <button class="nav-item" data-screen="dashboard"><span class="emoji">📊</span> Dashboard</button>
+    <button class="nav-item" data-screen="farms"><span class="emoji">🚜</span> My Farms</button>
+    <button class="nav-item" data-screen="cropguide"><span class="emoji">🌱</span> Crop Guide</button>
+    <button class="nav-item" data-screen="weather"><span class="emoji">⛅</span> Weather</button>
+    <button class="nav-item" data-screen="market"><span class="emoji">🛒</span> Market Prices</button>
+    <button class="nav-item" data-screen="schemes"><span class="emoji">🏛️</span> Govt Schemes</button>
+    <button class="nav-item" data-screen="knowledge"><span class="emoji">📖</span> Knowledge Base</button>
+    <button class="nav-item" data-screen="alerts"><span class="emoji">🔔</span> Alerts</button>
+    <button class="nav-item" data-screen="settings"><span class="emoji">⚙️</span> Settings</button>
+  </div>
+  <button class="install-btn" id="installBtn">📲 Install App</button>
+  <div class="sidebar-profile">
+    <div class="avatar" id="avatarInitial">F</div>
+    <div><div class="name" id="sidebarName">Farmer</div><div class="loc" id="sidebarLoc">Set your location in Settings</div></div>
+  </div>
+</div>
+
+<div class="topbar"><button class="hamburger" id="hamburgerBtn">☰</button><div class="topbar-title" id="topbarTitle">Farmora</div></div>
+
+<div class="app-shell">
+  <div class="center-col">
+
+    <div class="screen active chat-wrap" id="screen-chat" style="padding:0;display:flex;">
+      <div class="hero">
+        <div class="hero-top-row">
+          <div><div class="hero-greeting" id="heroGreeting">Hello! 👋</div><div class="hero-sub">How can I help you today?</div></div>
+          <div style="display:flex;flex-direction:column;align-items:flex-end;gap:6px;">
+            <div class="lang-pill-toggle">
+              <button class="lang-pill lang-chip active" data-lang="ta-IN" id="lang-ta">தமிழ்</button>
+              <button class="lang-pill lang-chip" data-lang="en-IN" id="lang-en">EN</button>
+            </div>
+            <button class="location-pill" id="geoBtn">📍 <span id="geoBtnLabel">Set location</span></button>
+          </div>
+        </div>
+      </div>
+      <div class="active-mode-bar" id="activeModeBar" style="display:none;">
+        <span id="activeModeLabel"></span>
+        <button id="clearModeBtn">✕ Clear</button>
+      </div>
+      <div class="chat-area" id="chatArea">
+        <div class="msg-row">
+          <div class="msg-avatar bot">🌾</div>
+          <div class="msg-bubble-col">
+            <div class="msg bot">வணக்கம்! நான் Farmora 🌾 பயிர், நோய், பூச்சி, வானிலை, அரசு திட்டங்கள் பற்றி என்னிடம் கேளுங்கள்.
+            <br><span style="opacity:0.65;font-size:12px;">(Hi! I'm Farmora. Ask me anything about crops, pests, weather, or government schemes. You can attach up to 3 leaf photos at once for a more reliable diagnosis.)</span></div>
+            <div class="msg-time" id="welcomeTime"></div>
+          </div>
+        </div>
+      </div>
+      <div class="suggestions-bar" id="suggestions"></div>
+      <div class="image-preview-bar" id="previewBar"></div>
+      <div class="input-bar">
+        <div class="attach-wrap">
+          <button class="icon-btn" id="cameraBtn" title="Attach photo"><svg viewBox="0 0 24 24"><path d="M9.4 10.5l4.77-8.26C13.47 2.09 12.75 2 12 2c-2.4 0-4.6.85-6.32 2.25l3.66 6.35.06-.1zM21.54 9c-.92-2.92-3.15-5.26-6-6.34L11.88 9h9.66zm.26 1H14.5l.29.5 5.76 9.98C22.17 18.4 23 16.3 23 14c0-1.09-.19-2.14-.53-3.11L21.8 10zM8.54 12l-3.9-6.75C3.16 6.94 2 9.5 2 12c0 2.3.83 4.4 2.2 6.11l1.55-2.68 2.79-4.83zm-.29-.6l-2.8 4.85-.2.34-2.34 4.04C5.4 21.62 8.4 22 12 22c1.29 0 2.53-.19 3.68-.55L14.6 20 8.25 11.4z"/></svg></button>
+          <div class="attach-menu" id="attachMenu">
+            <button class="attach-option" data-attach-mode="soil"><span class="ao-icon soil-icon">🟤</span><div><div class="ao-title">Soil Analysis</div><div class="ao-sub">Get crop suggestions from a soil photo</div></div></button>
+            <button class="attach-option" data-attach-mode="leaf"><span class="ao-icon leaf-icon">🍃</span><div><div class="ao-title">Leaf / Pest Check</div><div class="ao-sub">Diagnose disease from up to 3 photos</div></div></button>
+            <button class="attach-option" data-attach-mode="general"><span class="ao-icon photo-icon">📷</span><div><div class="ao-title">General Photo</div><div class="ao-sub">Ask a question about any photo</div></div></button>
+          </div>
+        </div>
+        <button class="icon-btn" id="micBtn" title="Speak"><svg viewBox="0 0 24 24"><path d="M12 14c1.66 0 3-1.34 3-3V5c0-1.66-1.34-3-3-3S9 3.34 9 5v6c0 1.66 1.34 3 3 3zm5-3c0 2.76-2.24 5-5 5s-5-2.24-5-5H5c0 3.53 2.61 6.43 6 6.92V21h2v-3.08c3.39-.49 6-3.39 6-6.92h-2z"/></svg></button>
+        <input type="text" id="textInput" placeholder="Type your message...">
+        <input type="file" id="fileInput" accept="image/*" capture="environment" multiple>
+        <button class="icon-btn" id="sendBtn" title="Send"><svg viewBox="0 0 24 24"><path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"/></svg></button>
+      </div>
+      <div class="disclaimer">Farmora can make mistakes. Please verify important information.</div>
+    </div>
+
+    <div class="screen" id="screen-dashboard">
+      <div class="screen-title">Dashboard</div><div class="screen-subtitle">Your farm at a glance</div>
+      <div class="dash-grid">
+        <div class="dash-stat"><div class="num" id="dashTemp">--°</div><div class="lbl">Current temp</div></div>
+        <div class="dash-stat"><div class="num">2</div><div class="lbl">Active alerts</div></div>
+      </div>
+      <div class="card"><h3>👋 Welcome back<span id="dashName"></span></h3><p>Use Chat anytime — voice, text, or photo.</p>
+        <div class="quick-actions">
+          <button class="quick-btn" data-jump="soil">🟤 Check Soil</button>
+          <button class="quick-btn" data-jump="leaf">🍃 Check Leaf</button>
+          <button class="quick-btn" data-jump="general">💬 Ask a Question</button>
+        </div>
+      </div>
+      <div id="dashFarmSummary"></div>
+      <div class="card"><h3>🌾 Today's tip</h3><p id="dashTip">Loading...</p></div>
+      <div class="widget-title" style="margin-top:4px;">Recent Checks</div>
+      <div id="dashDiagnoses"><div class="card"><p style="color:var(--soil-light);">Loading recent checks...</p></div></div>
+    </div>
+
+    <div class="screen" id="screen-farms">
+      <div class="screen-title">My Farms</div><div class="screen-subtitle">Manage your farms and crops</div>
+      <div id="farmsList"><div class="card"><p style="color:var(--soil-light);">Loading your farms...</p></div></div>
+      <div class="card" id="addFarmCard">
+        <h3 id="farmFormTitle">➕ Add a farm</h3>
+        <input type="hidden" id="farmFormId">
+        <div class="setting-group" style="box-shadow:none;padding:0;margin-top:8px;">
+          <label for="farmName">Farm name</label><input type="text" id="farmName" placeholder="e.g. North Field">
+          <label for="farmLocation">Location</label><input type="text" id="farmLocation" placeholder="e.g. Trichy, Tamil Nadu">
+          <label for="farmArea">Area (acres)</label><input type="number" id="farmArea" min="0" step="0.1" placeholder="e.g. 2">
+          <label for="farmSoil">Soil type</label><input type="text" id="farmSoil" placeholder="e.g. Clay loam">
+          <label for="farmIrrigation">Irrigation type</label><input type="text" id="farmIrrigation" placeholder="e.g. Canal, Borewell">
+        </div>
+        <div style="display:flex;gap:8px;margin-top:6px;">
+          <button class="quick-btn" id="farmSaveBtn">Save farm</button>
+          <button class="danger-btn" id="farmCancelBtn" style="display:none;width:auto;padding:9px 14px;">Cancel edit</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="screen" id="screen-cropguide">
+      <div class="screen-title">Crop Guide</div><div class="screen-subtitle">Quick reference for common Tamil Nadu crops</div>
+      <div class="card"><h3>🌾 Paddy (Rice)</h3><p>Best sown June–July (Kuruvai) or Aug–Sept (Samba). Needs standing water, clayey/alluvial soil. Watch for stem borer and blast disease.</p><span class="tag">Water-intensive</span><span class="tag">90-150 days</span></div>
+      <div class="card"><h3>🥜 Groundnut</h3><p>Sow after monsoon onset, prefers sandy loam soil, moderate water. Watch for leaf spot and collar rot in wet conditions.</p><span class="tag">Drought-tolerant</span><span class="tag">100-120 days</span></div>
+      <div class="card"><h3>🎋 Sugarcane</h3><p>Plant Dec-Jan or June-July. Needs deep, well-drained soil and heavy irrigation. Watch for red rot and early shoot borer.</p><span class="tag">High water need</span><span class="tag">10-12 months</span></div>
+      <div class="card"><h3>☁️ Cotton</h3><p>Sow with monsoon (June), suits black soil best. Moderate water. Watch for bollworm and whitefly infestations.</p><span class="tag">Black soil</span><span class="tag">150-180 days</span></div>
+    </div>
+
+    <div class="screen" id="screen-weather">
+      <div class="screen-title">Weather</div><div class="screen-subtitle">Live forecast — powered by Open-Meteo</div>
+      <div class="weather-search"><input type="text" id="weatherLocationInput" placeholder="Enter village / district / city"><button id="weatherSearchBtn">Search</button></div>
+      <div id="weatherContent"><div class="weather-loading">Enter a location above, or tap "Use my location" in Chat.</div></div>
+    </div>
+
+    <div class="screen" id="screen-market">
+      <div class="screen-title">Market Prices</div><div class="screen-subtitle">Mandi price reference</div>
+      <div class="demo-badge">DEMO DATA — connect to Agmarknet API for live prices</div>
+      <table class="market-table"><tr><th>Crop</th><th>Price (₹/quintal)</th><th>Trend</th></tr>
+        <tr><td>Paddy</td><td>₹2,180</td><td class="trend-up">▲ 2.1%</td></tr>
+        <tr><td>Groundnut</td><td>₹6,450</td><td class="trend-down">▼ 1.4%</td></tr>
+        <tr><td>Sugarcane</td><td>₹315</td><td class="trend-up">▲ 0.8%</td></tr>
+        <tr><td>Cotton</td><td>₹7,020</td><td class="trend-up">▲ 3.2%</td></tr>
+        <tr><td>Tomato</td><td>₹1,250</td><td class="trend-up">▲ 4.2%</td></tr>
+      </table>
+    </div>
+
+    <div class="screen" id="screen-schemes">
+      <div class="screen-title">Government Scheme Matcher</div>
+      <div class="screen-subtitle">Check what you may be eligible for</div>
+      <div class="setting-group">
+        <label for="schemeCrop">Crop grown</label>
+        <input type="text" id="schemeCrop" placeholder="e.g. Paddy">
+        <label for="schemeLand">Land size (acres)</label>
+        <input type="number" id="schemeLand" placeholder="e.g. 2">
+        <label for="schemeCategory">Farmer category</label>
+        <select id="schemeCategory">
+          <option value="small">Small / Marginal farmer</option>
+          <option value="large">Large farmer</option>
+        </select>
+        <button class="match-btn" id="matchSchemesBtn">Check Eligible Schemes</button>
+      </div>
+      <div id="schemeResults"></div>
+    </div>
+
+    <div class="screen" id="screen-knowledge">
+      <div class="screen-title">Knowledge Base</div><div class="screen-subtitle">Common questions, answered simply</div>
+      <div class="faq-item"><div class="faq-q">How accurate is the soil photo analysis? <span>▾</span></div><div class="faq-a">It gives a rough visual estimate of soil type only — not lab-accurate nutrient levels. For precise fertilizer advice, share your soil health card values in Chat.</div></div>
+      <div class="faq-item"><div class="faq-q">Can I use this without typing? <span>▾</span></div><div class="faq-a">Yes. Tap the microphone button in Chat and speak your question in Tamil or English.</div></div>
+      <div class="faq-item"><div class="faq-q">What does the confidence badge mean? <span>▾</span></div><div class="faq-a">It shows how certain the AI is about a diagnosis. Low confidence means you should consult your local Krishi Vigyan Kendra before acting.</div></div>
+      <div class="faq-item"><div class="faq-q">Is my data shared with anyone? <span>▾</span></div><div class="faq-a">Your profile settings are stored only on your own device.</div></div>
+    </div>
+
+    <div class="screen" id="screen-alerts">
+      <div class="screen-title">Alerts</div><div class="screen-subtitle">Based on your location's weather</div>
+      <div id="alertsContent"><div class="alert-item info"><div>ℹ️</div><div class="alert-text"><div class="t">Set your location</div>Go to Settings to see weather-based alerts here.</div></div></div>
+    </div>
+
+    <div class="screen" id="screen-settings">
+      <div class="screen-title">Settings</div><div class="screen-subtitle">Personalize your assistant</div>
+      <div class="setting-group">
+        <label for="settingsName">Your name</label><input type="text" id="settingsName" placeholder="e.g. Ramesh Kumar">
+        <label for="settingsCrop">Primary crop</label><input type="text" id="settingsCrop" placeholder="e.g. Paddy, Groundnut">
+        <label for="settingsLocation">Location</label><input type="text" id="settingsLocation" placeholder="e.g. Trichy, Tamil Nadu">
+      </div>
+      <div class="setting-group"><label>Preferred voice language</label>
+        <div class="lang-toggle-row"><button class="lang-btn active" id="settingsLangTa">தமிழ் Tamil</button><button class="lang-btn" id="settingsLangEn">English</button></div>
+      </div>
+      <div class="setting-group">
+        <label>Chat history</label>
+        <button class="quick-btn" id="viewHistoryBtn" style="margin-bottom:10px;">🕘 Recent conversations</button>
+        <button class="danger-btn" id="clearHistoryBtn">Clear chat history</button>
+        <div id="chatHistoryList" style="margin-top:10px;"></div>
+      </div>
+      <div class="setting-group">
+        <label>About this profile</label>
+        <p style="font-size:12px;color:var(--soil-light);line-height:1.5;">Your profile and farm data are saved to the Farmora server under an anonymous device ID — not a real account. This is not secure login; it does not protect your data from someone else using this device or knowing your ID.</p>
+      </div>
+    </div>
+
+  </div>
+
+  <div class="right-col" id="rightCol">
+    <div class="widget-title">Quick Actions</div>
+    <div class="widget-card">
+      <div class="quick-grid">
+        <button class="quick-item" data-jump="leaf"><div class="qi-icon">🩺</div><div class="qi-label">Crop Doctor</div></button>
+        <button class="quick-item" data-nav="weather"><div class="qi-icon">🌤️</div><div class="qi-label">Weather</div></button>
+        <button class="quick-item" data-nav="schemes"><div class="qi-icon">🏛️</div><div class="qi-label">Schemes</div></button>
+        <button class="quick-item" data-jump="soil"><div class="qi-icon">🧪</div><div class="qi-label">Fertilizer</div></button>
+        <button class="quick-item" data-jump="leaf"><div class="qi-icon">🐛</div><div class="qi-label">Pest Control</div></button>
+        <button class="quick-item" data-nav="knowledge"><div class="qi-icon">🙋</div><div class="qi-label">Ask Expert</div></button>
+      </div>
+    </div>
+    <div class="widget-title">Today's Weather</div>
+    <div class="widget-card" id="weatherWidget"><div class="weather-mini-temp">--°C</div><div class="weather-mini-desc">Set location in Settings</div><div class="widget-link" data-nav="weather">View full forecast →</div></div>
+    <div class="widget-title">Market Prices <span style="font-weight:400;color:#9AAE9D;">(₹/quintal)</span></div>
+    <div class="widget-card">
+      <div class="demo-badge-sm" style="margin-bottom:8px;display:inline-block;">DEMO</div>
+      <div class="market-mini-row"><span>Tomato</span><span class="trend-up">1,250 ▲</span></div>
+      <div class="market-mini-row"><span>Paddy</span><span class="trend-up">2,180 ▲</span></div>
+      <div class="market-mini-row"><span>Groundnut</span><span class="trend-down">6,450 ▼</span></div>
+      <div class="widget-link" data-nav="market">View all prices →</div>
+    </div>
+    <div class="widget-title">Tip of the Day</div>
+    <div class="widget-card"><div style="display:flex;gap:8px;"><span>💡</span><span style="font-size:12.5px;line-height:1.5;">Drip irrigation can save up to 60% water and improve crop yield compared to flood irrigation.</span></div></div>
+  </div>
+</div>
+
+<script src="config.js"></script>
+<script src="js/app.js"></script>
+</body>
+</html>
