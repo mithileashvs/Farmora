@@ -90,3 +90,33 @@ test('GET /config.js is still served (frontend config unaffected by the CSP fix)
   const res = await request(app).get('/config.js');
   assert.equal(res.status, 200);
 });
+
+/* ---------------- Screen-switching CSS (Chat History page fix) ---------------- */
+
+test('#screen-chat is the only .screen element carrying an extra class, and an explicit rule hides it when inactive', () => {
+  // Regression test for a real bug: #screen-chat carries both `.screen` and
+  // `.chat-wrap`. Without an explicit `.chat-wrap:not(.active) { display:
+  // none }` rule, an inactive #screen-chat and `.chat-wrap` land at equal
+  // CSS specificity (one class each) and — because `.chat-wrap` is
+  // declared later in the stylesheet — `.chat-wrap`'s `display: flex`
+  // would win the tie, keeping the full chat UI visible above whatever
+  // screen was actually navigated to (this is exactly what was reported
+  // for the Chat History page). This test guards the fix, and also
+  // confirms no other .screen element has the same extra-class hazard.
+  assert.match(
+    INDEX_HTML,
+    /\.chat-wrap:not\(\.active\)\s*\{\s*display:\s*none;?\s*\}/,
+    'missing the .chat-wrap:not(.active) rule that keeps an inactive chat screen hidden'
+  );
+
+  const screenClassAttrs = [...INDEX_HTML.matchAll(/class="([^"]*)"/g)]
+    .map((m) => m[1])
+    .filter((cls) => cls.split(/\s+/).includes('screen'));
+  const extraClassScreens = screenClassAttrs.filter((cls) => cls.split(/\s+/).filter((c) => c !== 'screen' && c !== 'active').length > 0);
+  assert.deepEqual(
+    extraClassScreens,
+    ['screen active chat-wrap'],
+    'a new .screen element with an extra class was added — verify it doesn\'t have the same specificity-tie hazard as chat-wrap'
+  );
+});
+

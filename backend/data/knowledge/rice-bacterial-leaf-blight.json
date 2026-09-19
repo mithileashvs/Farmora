@@ -1,0 +1,15 @@
+{
+  "id": "rice-bacterial-leaf-blight",
+  "title": "Bacterial Leaf Blight of Rice — Symptoms and Management",
+  "source": "ICAR general plant pathology guidance",
+  "sourceUrl": "https://icar.org.in",
+  "organization": "Indian Council of Agricultural Research (ICAR)",
+  "category": "disease_management",
+  "crop": "paddy",
+  "cropStage": "vegetative,tillering",
+  "topic": "bacterial leaf blight, BLB, Xanthomonas, wilting, leaf yellowing",
+  "language": "en-IN",
+  "region": "India",
+  "publishedDate": "2022-09-01",
+  "content": "Bacterial leaf blight (BLB), caused by the bacterium Xanthomonas oryzae pv. oryzae, is one of the most destructive bacterial diseases of rice. It typically appears in two forms. The more common form starts as water-soaked, pale-yellow to white streaks near the leaf tip or margins that enlarge, turn yellow-to-grayish-white, and run along the veins toward the leaf base; affected leaves eventually dry out and turn straw-colored, giving fields a scorched appearance when infection is widespread. The less common 'kresek' form affects young seedlings, causing rapid wilting and death of the whole plant within days, and can be mistaken for drought stress or another wilt disease at first glance.\n\nThe disease spreads mainly through infected seed, crop residue left in or near the field, irrigation water, and wind-driven rain, and is favored by warm temperatures, high humidity, and periods of heavy rain or strong wind — conditions that create leaf wounds and help bacteria spread between plants. Fields with excess nitrogen application tend to be more severely affected, similar to the nitrogen-susceptibility pattern seen with blast disease.\n\nBecause bacterial leaf blight, blast, and other rice leaf diseases can look superficially similar in early stages (yellowing or drying leaf tips), correct identification matters for choosing the right response: BLB lesions typically start at the leaf tip/margin and follow the veins with a wavy yellow-white pattern, while blast lesions are typically diamond/spindle-shaped with grey centers appearing anywhere on the leaf blade, not just the margins.\n\nManagement is largely preventive, since there is no in-season chemical cure for a bacterial disease once established: use disease-free/treated seed, avoid excess nitrogen (balanced, split application guided by soil testing rather than a flat high dose), avoid clipping seedling leaf tips during transplanting (a common entry point for the bacterium), improve field drainage since standing water after storms favors spread, and remove/destroy infected crop residue after harvest rather than leaving it in the field. Because BLB can spread quickly under favorable weather and resembles other leaf problems, farmers noticing suspected symptoms — especially rapid wilting of young seedlings — should get the diagnosis confirmed by a local agricultural extension officer or Krishi Vigyan Kendra promptly, since management (especially of the seedling-wilt form) is most effective when started early."
+}

@@ -16,7 +16,19 @@ function toPublicSource(chunk) {
 }
 
 function toPublicSources(chunks) {
-  return (chunks || []).map(toPublicSource);
+  // Multiple retrieved chunks often come from the same source document
+  // (chunked into pieces) — dedupe by documentId so the frontend shows
+  // "this document" once, not the same title repeated several times, while
+  // keeping the highest-relevance chunk's score for that document.
+  const seen = new Map();
+  for (const chunk of chunks || []) {
+    const key = chunk.documentId || chunk.title;
+    const existing = seen.get(key);
+    if (!existing || (chunk.relevance || 0) > (existing.relevance || 0)) {
+      seen.set(key, chunk);
+    }
+  }
+  return Array.from(seen.values()).map(toPublicSource);
 }
 
 module.exports = { toPublicSource, toPublicSources };

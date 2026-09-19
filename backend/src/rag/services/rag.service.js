@@ -1,8 +1,20 @@
 const { isConnected } = require('../../config/db');
+const { NODE_ENV } = require('../../config/env');
 const { understandQuery } = require('../retrieval/query');
 const { retrieveChunks } = require('../retrieval/retriever');
 const { buildRagPromptAddition } = require('../prompts/rag.prompt');
 const { toPublicSources } = require('../utils/metadata');
+
+// Development-only diagnostics (never runs in production) so RAG behavior
+// is observable while investigating "did retrieval actually happen"
+// questions. Only ever logs the retrieval query text, detected crop/
+// category, chunk count, titles, and relevance scores — never
+// GROQ_API_KEY, the MongoDB connection string, Authorization headers, or
+// any other secret/credential, none of which this function ever touches.
+const RAG_DEBUG = NODE_ENV !== 'production';
+function ragDebugLog(...args) {
+  if (RAG_DEBUG) console.log('[rag-debug]', ...args);
+}
 
 /**
  * Single entrypoint the chat/analyze controllers call. NEVER throws —
@@ -22,12 +34,22 @@ const { toPublicSources } = require('../utils/metadata');
 async function retrieveForQuery({ message, mode, crop, farmerCrop, language }) {
   const empty = { promptAddition: '', sources: [], usedKnowledge: false };
 
-  if (!isConnected()) return empty; // no DB -> no knowledge base to search
+  if (!isConnected()) {
+    ragDebugLog('RAG skipped: MongoDB not connected');
+    return empty; // no DB -> no knowledge base to search
+  }
 
   try {
     const { crop: detectedCrop, category, retrievalText } = understandQuery({ message, mode, crop, farmerCrop });
 
-    if (!retrievalText.trim()) return empty;
+    if (!retrievalText.trim()) {
+      ragDebugLog('RAG skipped: empty retrieval text (no message/crop/category signal)');
+      return empty;
+    }
+
+    ragDebugLog(
+      `RAG invoked | query="${retrievalText}" | detectedCrop="${detectedCrop}" | category="${category}" | language="${language || ''}"`
+    );
 
     const chunks = await retrieveChunks({
       queryText: retrievalText,
@@ -35,6 +57,13 @@ async function retrieveForQuery({ message, mode, crop, farmerCrop, language }) {
       category,
       language,
     });
+
+    ragDebugLog(
+      `RAG retrieved ${chunks.length} chunk(s)` +
+        (chunks.length
+          ? ': ' + chunks.map((c) => `"${c.title}" (relevance=${c.relevance})`).join(', ')
+          : '')
+    );
 
     if (!chunks.length) {
       // Knowledge base reachable but nothing relevant found — still tell the

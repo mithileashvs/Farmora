@@ -41,26 +41,85 @@ authTabLogin.addEventListener('click', () => {
   authNote.textContent = 'Log in with the phone number you signed up with on this device.';
 });
 
-authSubmitBtn.addEventListener('click', () => {
+authSubmitBtn.addEventListener('click', async () => {
   const phone = authPhone.value.trim();
   const password = authPassword.value.trim();
   if (!phone || !password) { alert('Please fill in phone number and password.'); return; }
 
-  if (isLoginMode) {
-    try {
-      const stored = JSON.parse(localStorage.getItem('farmora_account') || 'null');
-      if (!stored || stored.phone !== phone || stored.password !== password) {
-        alert('No matching local account found on this device. Try Sign Up instead.');
+  const originalLabel = authSubmitBtn.textContent;
+  authSubmitBtn.disabled = true;
+  authSubmitBtn.textContent = isLoginMode ? 'Logging in…' : 'Creating account…';
+
+  try {
+    if (isLoginMode) {
+      const res = await fetch(apiUrl('/api/accounts/login'), {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ phone, password }),
+      });
+      if (res.status === 503) {
+        alert("Farmora's server is temporarily unavailable, so login can't be verified right now. Please try again shortly.");
         return;
       }
-      settingsName.value = stored.name || '';
-    } catch (e) {}
-  } else {
-    const name = authName.value.trim();
-    if (!name) { alert('Please enter your name.'); return; }
-    try { localStorage.setItem('farmora_account', JSON.stringify({ name, phone, password })); } catch (e) {}
-    settingsName.value = name;
+      if (!res.ok) {
+        alert(await readErrorMessage(res));
+        return;
+      }
+      const data = await res.json();
+      settingsName.value = (data.account && data.account.name) || '';
+      // Restore the anonymous backend identity this account is linked to
+      // (saved server-side at Sign Up — see below), so the farms/
+      // diagnoses/chat history already saved under it in MongoDB become
+      // reachable again, from this or any other device.
+      const restoredUserId = data.account && data.account.userId;
+      if (restoredUserId && restoredUserId !== FARMORA_USER_ID) {
+        try {
+          localStorage.setItem('farmora_user_id', restoredUserId);
+          // A returning, successfully-logged-in user shouldn't be walked
+          // back through the full onboarding wizard — their real profile
+          // (language/location/crop) will be re-fetched from the backend
+          // via that restored id right after reload.
+          localStorage.setItem('farmora_onboarded', 'true');
+        } catch (e) {}
+        window.location.reload();
+        return;
+      }
+    } else {
+      const name = authName.value.trim();
+      if (!name) { alert('Please enter your name.'); return; }
+      const res = await fetch(apiUrl('/api/accounts/signup'), {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ name, phone, password, userId: FARMORA_USER_ID }),
+      });
+      if (res.status === 503) {
+        // The server (and its database) is an enhancement here, not a hard
+        // requirement — let the person continue using Farmora on this
+        // device even though their login couldn't be saved for later/
+        // other-device use right now.
+        alert("Farmora's server is temporarily unavailable, so this account can't be saved for cross-device login yet — you can keep using Farmora on this device, and try signing up again later.");
+      } else if (!res.ok) {
+        alert(await readErrorMessage(res));
+        return;
+      }
+      settingsName.value = name;
+    }
+  } catch (networkErr) {
+    // Backend unreachable entirely (offline, etc.) — degrade gracefully
+    // rather than blocking the person from using the app at all.
+    console.error('Farmora: account request failed', networkErr);
+    if (isLoginMode) {
+      alert("Could not reach Farmora's server to verify login. Please check your connection and try again.");
+      authSubmitBtn.disabled = false;
+      authSubmitBtn.textContent = originalLabel;
+      return;
+    }
+    settingsName.value = authName.value.trim();
+  } finally {
+    authSubmitBtn.disabled = false;
+    authSubmitBtn.textContent = originalLabel;
   }
+
   saveProfile();
   showOnboardStep(2);
 });
@@ -144,7 +203,7 @@ const sidebarOverlay = document.getElementById('sidebarOverlay');
 const hamburgerBtn = document.getElementById('hamburgerBtn');
 const topbarTitle = document.getElementById('topbarTitle');
 const rightCol = document.getElementById('rightCol');
-const screenTitles = { chat: 'Farmora', dashboard: 'Dashboard', farms: 'My Farms', cropguide: 'Crop Guide', weather: 'Weather', market: 'Market Prices', schemes: 'Govt Schemes', knowledge: 'Knowledge Base', alerts: 'Alerts', settings: 'Settings' };
+const screenTitles = { chat: 'Farmora', dashboard: 'Dashboard', farms: 'My Farms', cropguide: 'Crop Guide', weather: 'Weather', market: 'Market Prices', schemes: 'Govt Schemes', knowledge: 'Knowledge Base', alerts: 'Alerts', history: 'Chat History', settings: 'Settings' };
 hamburgerBtn.addEventListener('click', () => { sidebar.classList.add('open'); sidebarOverlay.classList.add('show'); });
 sidebarOverlay.addEventListener('click', () => { sidebar.classList.remove('open'); sidebarOverlay.classList.remove('show'); });
 function goToScreen(name) {
@@ -161,6 +220,7 @@ function goToScreen(name) {
   if (name === 'dashboard') initDashboard();
   if (name === 'alerts') initAlerts();
   if (name === 'farms') initFarmsScreen();
+  if (name === 'history') initHistoryScreen();
 }
 document.querySelectorAll('.nav-item').forEach(item => item.addEventListener('click', () => goToScreen(item.dataset.screen)));
 document.querySelectorAll('[data-jump]').forEach(btn => btn.addEventListener('click', () => { goToScreen('chat'); const c = document.getElementById('chip-' + btn.dataset.jump); if (c) c.click(); }));
@@ -680,7 +740,18 @@ function dataUrlToBlob(dataUrl) {
   return new Blob([bytes], { type: mime });
 }
 async function readErrorMessage(response) {
-  try { const data = await response.json(); if (data && data.error) return data.error; } catch (e) {}
+  try {
+    const data = await response.json();
+    if (data && data.error) {
+      // Phase 1 endpoints (chat/analyze) send `error` as a plain string.
+      // Phase 2/3 endpoints (users/farms/accounts/...) send a structured
+      // `{ code, message }` object instead. Without this check, every
+      // caller below got `new Error({code,message})`, which stringifies
+      // to the useless "[object Object]" — a real bug that silently broke
+      // every Farms create/update/delete error alert since Phase 2.
+      return typeof data.error === 'string' ? data.error : (data.error.message || 'Farmora could not process the request.');
+    }
+  } catch (e) {}
   return "Farmora could not process the request.";
 }
 async function getAIResponse(question, mode, imageDataUrls) {
@@ -979,4 +1050,185 @@ document.getElementById('viewHistoryBtn').addEventListener('click', async () => 
       el.appendChild(row);
     });
   } catch (e) { el.innerHTML = '<p style="color:var(--soil-light);font-size:12.5px;">No history available right now.</p>'; }
+});
+/* ================= CHAT HISTORY PAGE ================= */
+let historyPage = 1;
+let historyPages = 1;
+let historyItems = []; // flat list of { _id, message, response, createdAt, mode, sources }
+let historyLoading = false;
+
+function formatHistoryDateGroup(iso) {
+  const d = new Date(iso);
+  const today = new Date();
+  const yesterday = new Date(); yesterday.setDate(today.getDate() - 1);
+  const sameDay = (a, b) => a.toDateString() === b.toDateString();
+  if (sameDay(d, today)) return 'Today';
+  if (sameDay(d, yesterday)) return 'Yesterday';
+  return d.toLocaleDateString(undefined, { day: 'numeric', month: 'long', year: 'numeric' });
+}
+
+function renderHistoryList() {
+  const el = document.getElementById('historyList');
+  if (!historyItems.length) {
+    el.innerHTML = '<div class="card"><p style="color:var(--soil-light);">No conversations yet. Start chatting with Farmora and they\'ll show up here.</p></div>';
+    document.getElementById('historyLoadMoreBtn').style.display = 'none';
+    return;
+  }
+  // Group chronologically by day — the backend doesn't track a separate
+  // "conversation/session id", so each stored chat (one question + one
+  // answer) is grouped by the calendar day it happened on, in order.
+  const groups = [];
+  let currentLabel = null;
+  historyItems.forEach((item) => {
+    const label = formatHistoryDateGroup(item.createdAt);
+    if (label !== currentLabel) { groups.push({ label, items: [] }); currentLabel = label; }
+    groups[groups.length - 1].items.push(item);
+  });
+
+  el.innerHTML = '';
+  groups.forEach((group) => {
+    const heading = document.createElement('div');
+    heading.className = 'widget-title';
+    heading.style.marginTop = '10px';
+    heading.textContent = group.label;
+    el.appendChild(heading);
+    group.items.forEach((item) => {
+      const card = document.createElement('div');
+      card.className = 'card';
+      card.style.cursor = 'pointer';
+      const icon = item.mode === 'soil' ? '🟤' : item.mode === 'leaf' ? '🍃' : '💬';
+      const time = new Date(item.createdAt).toLocaleTimeString(undefined, { hour: '2-digit', minute: '2-digit' });
+      card.innerHTML = `<div style="display:flex;justify-content:space-between;gap:8px;">
+          <h3 style="margin:0;">${icon} ${escapeHtml((item.message || '(image analysis)').slice(0, 60))}${(item.message || '').length > 60 ? '…' : ''}</h3>
+          <span style="font-size:11px;color:#9AAE9D;white-space:nowrap;">${time}</span>
+        </div>
+        <p style="margin-top:4px;">${escapeHtml((item.response || '').slice(0, 120))}${(item.response || '').length > 120 ? '…' : ''}</p>`;
+      card.addEventListener('click', () => openHistoryDetail(item));
+      el.appendChild(card);
+    });
+  });
+
+  document.getElementById('historyLoadMoreBtn').style.display = historyPage < historyPages ? 'block' : 'none';
+}
+
+function openHistoryDetail(item) {
+  document.getElementById('historyListView').style.display = 'none';
+  document.getElementById('historyDetailView').style.display = 'block';
+  document.getElementById('historyDetailDate').textContent = new Date(item.createdAt).toLocaleString();
+  const card = document.getElementById('historyDetailCard');
+  card.innerHTML = `<div style="margin-bottom:14px;"><div style="font-weight:700;color:var(--soil);margin-bottom:4px;">🧑‍🌾 You asked</div><div>${escapeHtml(item.message || '(image analysis)')}</div></div>
+    <div><div style="font-weight:700;color:var(--soil);margin-bottom:4px;">🌾 Farmora answered</div><div>${escapeHtml(item.response || '')}</div></div>`;
+  const src = sourcesBlock(item.sources);
+  if (src) card.appendChild(src);
+}
+
+document.getElementById('historyBackBtn').addEventListener('click', () => {
+  document.getElementById('historyDetailView').style.display = 'none';
+  document.getElementById('historyListView').style.display = 'block';
+});
+
+async function loadHistoryPage() {
+  if (historyLoading) return;
+  historyLoading = true;
+  const listEl = document.getElementById('historyList');
+  if (historyPage === 1) listEl.innerHTML = '<div class="card"><p style="color:var(--soil-light);">Loading your conversations...</p></div>';
+  try {
+    const res = await fetch(apiUrl(`/api/chats/${FARMORA_USER_ID}?page=${historyPage}&limit=20`));
+    if (!res.ok) {
+      listEl.innerHTML = '<div class="card"><p style="color:var(--soil-light);">Could not load chat history right now. Please try again later.</p></div>';
+      document.getElementById('historyLoadMoreBtn').style.display = 'none';
+      return;
+    }
+    const data = await res.json();
+    const chats = (data.success && data.chats) || [];
+    historyPages = (data.pagination && data.pagination.pages) || 1;
+    historyItems = historyPage === 1 ? chats : historyItems.concat(chats);
+    renderHistoryList();
+  } catch (e) {
+    listEl.innerHTML = '<div class="card"><p style="color:var(--soil-light);">Could not load chat history right now. Please try again later.</p></div>';
+    document.getElementById('historyLoadMoreBtn').style.display = 'none';
+  } finally {
+    historyLoading = false;
+  }
+}
+
+document.getElementById('historyLoadMoreBtn').addEventListener('click', () => { historyPage += 1; loadHistoryPage(); });
+
+function initHistoryScreen() {
+  // Reset to the list view and reload from page 1 each time the screen is
+  // opened — this only ever performs GET requests, so opening/reopening
+  // this screen never creates a duplicate chat record.
+  document.getElementById('historyDetailView').style.display = 'none';
+  document.getElementById('historyListView').style.display = 'block';
+  historyPage = 1;
+  historyItems = [];
+  loadHistoryPage();
+}
+
+/* ================= PROFILE MODAL + LOGOUT ================= */
+const profileModalOverlay = document.getElementById('profileModalOverlay');
+const sidebarProfileBtn = document.querySelector('.sidebar-profile');
+
+function openProfileModal() {
+  document.getElementById('profileModalAvatar').textContent = (settingsName.value || 'F').trim().charAt(0).toUpperCase();
+  document.getElementById('profileModalName').textContent = settingsName.value || 'Farmer';
+  document.getElementById('profileModalMeta').textContent = FARMORA_USER_ID ? ('Device ID: ' + FARMORA_USER_ID.slice(0, 8) + '…') : '';
+  document.getElementById('profileModalLocation').textContent = settingsLocation.value || 'Not set';
+  document.getElementById('profileModalCrop').textContent = settingsCrop.value || 'Not set';
+  document.getElementById('profileModalLang').textContent = voiceLang === 'ta-IN' ? 'Tamil' : 'English';
+  profileModalOverlay.classList.add('show');
+}
+function closeProfileModal() { profileModalOverlay.classList.remove('show'); }
+
+sidebarProfileBtn.setAttribute('role', 'button');
+sidebarProfileBtn.setAttribute('tabindex', '0');
+sidebarProfileBtn.addEventListener('click', openProfileModal);
+sidebarProfileBtn.addEventListener('keydown', (e) => {
+  if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); openProfileModal(); }
+});
+document.getElementById('profileModalCloseBtn').addEventListener('click', closeProfileModal);
+profileModalOverlay.addEventListener('click', (e) => { if (e.target === profileModalOverlay) closeProfileModal(); });
+document.getElementById('profileModalSettingsBtn').addEventListener('click', () => { closeProfileModal(); goToScreen('settings'); });
+
+// The keys that make up "this device's current anonymous session" — the
+// anonymous user id itself, the active-farm selection, the cached profile
+// fields, and the onboarding-seen flag. Logging out clears ONLY these
+// (local, client-side) — it never touches MongoDB; the farms/diagnoses/
+// chat history already saved under this userId remain exactly as they were.
+//
+// Deliberately NOT included: 'farmora_account' (the local sign-up/login
+// credentials). Clearing it here was a real bug — it made "Login" always
+// fail afterward ("No matching local account found"), since there was
+// nothing left to match against. Login needs that record to survive
+// logout so a returning user can log back in and restore access to their
+// backend data (see authSubmitBtn's login branch above).
+const LOGOUT_CLEARED_KEYS = [
+  'farmora_user_id', 'farmora_active_farm_id',
+  'farmora_name', 'farmora_crop', 'farmora_location',
+  'farmora_onboarded',
+];
+
+document.getElementById('profileModalLogoutBtn').addEventListener('click', () => {
+  const confirmed = confirm(
+    'Log out of this device?\n\nYour farms, diagnoses, and chat history stay saved on the server under your ' +
+    'current anonymous ID — logging out only forgets that ID on this device. Starting fresh (Sign Up) begins ' +
+    'a new, empty profile; logging back in with your phone number and password restores this same data.'
+  );
+  if (!confirmed) return;
+
+  try {
+    LOGOUT_CLEARED_KEYS.forEach((k) => localStorage.removeItem(k));
+  } catch (e) {
+    // Handle logout errors gracefully — storage may be restricted (private
+    // browsing, quota, etc.); still proceed to reload so the UI doesn't get
+    // stuck showing a "logged out" state that didn't actually take effect.
+    console.error('Farmora: could not fully clear local profile data on logout', e);
+    alert('Could not fully clear local data on this device (your browser may be restricting storage access), but you will be returned to the guest screen now.');
+  }
+
+  // A full reload is the simplest reliable way to reset every piece of
+  // in-memory frontend state (current user id, active farm, cached
+  // profile fields, chat window, etc.) back to a clean guest state, and to
+  // regenerate a fresh anonymous id via the app's normal startup flow.
+  window.location.reload();
 });

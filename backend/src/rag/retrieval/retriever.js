@@ -19,19 +19,22 @@ const NEAR_DUPLICATE_THRESHOLD = 0.97;
 async function retrieveChunks({ queryText, crop, category, language, topK, threshold }) {
   if (!queryText || !queryText.trim()) return [];
 
+  // Crop is the one hard filter, and only on the first pass — it's the
+  // strongest, least ambiguous signal we have (see rag/retrieval/query.js).
+  // Category and language are soft preferences (small scoring boosts)
+  // rather than hard filters: hard-filtering by language in particular was
+  // a real bug — with an English-only seed knowledge base, a Tamil-language
+  // request would hard-filter every chunk out and silently retrieve
+  // nothing, even for a crop/topic the knowledge base actually covers.
   const filter = {};
   if (crop) filter.crop = crop;
-  if (language) filter.language = language;
-  // Category is a soft preference, not a hard filter — a hard filter risks
-  // hiding a relevant chunk that was categorized slightly differently.
-  // Metadata filtering is instead applied as a scoring boost below.
 
   let candidates = await KnowledgeChunk.find(filter).limit(500).lean();
   // If crop filtering wiped out the candidate set (e.g. no chunks tagged
   // with that exact crop yet), fall back to the full knowledge base rather
   // than returning nothing.
   if (crop && candidates.length === 0) {
-    candidates = await KnowledgeChunk.find(language ? { language } : {}).limit(500).lean();
+    candidates = await KnowledgeChunk.find({}).limit(500).lean();
   }
   if (candidates.length === 0) return [];
 
@@ -41,6 +44,7 @@ async function retrieveChunks({ queryText, crop, category, language, topK, thres
     .map((chunk) => {
       let score = cosineSimilarity(queryEmbedding, chunk.embedding);
       if (category && chunk.category === category) score += 0.05; // small relevance boost
+      if (language && chunk.language === language) score += 0.02; // small relevance boost, not a filter
       return { chunk, score };
     })
     .filter((s) => s.score >= (threshold ?? RAG_SIMILARITY_THRESHOLD))

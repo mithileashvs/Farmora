@@ -31,4 +31,15 @@ const knowledgeLimiter = rateLimit({
   handler: tooManyRequests,
 });
 
-module.exports = { chatLimiter, analyzeLimiter, knowledgeLimiter };
+// Signup/login touch password hashing and are a brute-force target — capped
+// much tighter than the other routes. Not a substitute for real account
+// lockout/backoff, but stops naive rapid-fire guessing.
+const accountLimiter = rateLimit({
+  windowMs: 60 * 1000,
+  max: 10,
+  standardHeaders: true,
+  legacyHeaders: false,
+  handler: tooManyRequests,
+});
+
+module.exports = { chatLimiter, analyzeLimiter, knowledgeLimiter, accountLimiter };

@@ -63,6 +63,13 @@
   .tag { display: inline-block; background: var(--husk-dark); color: var(--soil-light); font-size: 11px; padding: 3px 8px; border-radius: 6px; margin-right: 6px; margin-top: 6px; font-weight: 600; }
 
   .chat-wrap { flex: 1; display: flex; flex-direction: column; overflow: hidden; }
+  /* #screen-chat carries BOTH .screen and .chat-wrap. Without this rule, an
+     inactive #screen-chat and .chat-wrap have equal CSS specificity
+     (one class each) — with .chat-wrap declared later in the stylesheet,
+     its `display: flex` would win the tie and keep the full chat UI
+     visible (stacked above whatever screen is actually active) even
+     though .active was removed. This rule breaks that tie explicitly. */
+  .chat-wrap:not(.active) { display: none; }
   .chat-area { flex: 1; overflow-y: auto; padding: 18px 22px; display: flex; flex-direction: column; gap: 14px; background: var(--husk); }
   .msg-row { display: flex; gap: 10px; max-width: 85%; }
   .msg-row.user { align-self: flex-end; flex-direction: row-reverse; }
@@ -224,6 +231,23 @@
   .auth-error { color: var(--clay); font-size: 12px; margin-bottom: 10px; display: none; }
   .auth-error.show { display: block; }
 
+  /* ============ PROFILE MODAL ============ */
+  .sidebar-profile { cursor: pointer; }
+  .sidebar-profile:hover { background: rgba(255,255,255,0.06); }
+  .profile-modal-overlay {
+    position: fixed; inset: 0; z-index: 250;
+    background: rgba(35,77,44,0.55);
+    display: none; align-items: center; justify-content: center; padding: 20px;
+  }
+  .profile-modal-overlay.show { display: flex; animation: rise 0.2s ease; }
+  .profile-modal-card { background: var(--white); border-radius: 18px; padding: 26px 22px; width: 100%; max-width: 340px; box-shadow: 0 10px 40px rgba(0,0,0,0.25); }
+  .profile-modal-avatar { width: 56px; height: 56px; border-radius: 50%; background: var(--turmeric); color: var(--soil); display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 22px; margin: 0 auto 10px; }
+  .profile-modal-name { text-align: center; font-family: 'Roboto Slab', serif; font-size: 18px; font-weight: 700; color: var(--soil); }
+  .profile-modal-meta { text-align: center; color: var(--soil-light); font-size: 11.5px; margin-top: 2px; }
+  .profile-modal-row { display: flex; justify-content: space-between; font-size: 12.5px; color: var(--soil-light); padding: 8px 0; border-top: 1px solid var(--husk-dark); }
+  .profile-modal-row span:last-child { color: var(--soil); font-weight: 600; }
+  .profile-modal-note { font-size: 11px; color: #9AAE9D; line-height: 1.4; margin-top: 12px; }
+
   @media (min-width: 1000px) {
     .sidebar { transform: translateX(0); position: sticky; }
     .sidebar-overlay { display: none !important; } .hamburger { display: none; }
@@ -289,6 +313,22 @@
 
 </div>
 
+<!-- ============ PROFILE MODAL ============ -->
+<div id="profileModalOverlay" class="profile-modal-overlay">
+  <div class="profile-modal-card">
+    <div class="profile-modal-avatar" id="profileModalAvatar">F</div>
+    <div class="profile-modal-name" id="profileModalName">Farmer</div>
+    <div class="profile-modal-meta" id="profileModalMeta">—</div>
+    <div class="profile-modal-row"><span>Location</span><span id="profileModalLocation">Not set</span></div>
+    <div class="profile-modal-row"><span>Primary crop</span><span id="profileModalCrop">Not set</span></div>
+    <div class="profile-modal-row"><span>Language</span><span id="profileModalLang">—</span></div>
+    <p class="profile-modal-note">This profile is tied to an anonymous device ID, not a real account — logging out does not delete your saved farms, diagnoses, or chat history on the server.</p>
+    <button class="quick-btn" id="profileModalSettingsBtn" style="margin-top:14px;">⚙️ Edit in Settings</button>
+    <button class="danger-btn" id="profileModalLogoutBtn" style="margin-top:8px;">🚪 Logout</button>
+    <button class="onboard-skip" id="profileModalCloseBtn" style="margin-top:10px;">Close</button>
+  </div>
+</div>
+
 <div class="sidebar-overlay" id="sidebarOverlay"></div>
 <div class="sidebar" id="sidebar">
   <div class="sidebar-header">
@@ -305,6 +345,7 @@
     <button class="nav-item" data-screen="schemes"><span class="emoji">🏛️</span> Govt Schemes</button>
     <button class="nav-item" data-screen="knowledge"><span class="emoji">📖</span> Knowledge Base</button>
     <button class="nav-item" data-screen="alerts"><span class="emoji">🔔</span> Alerts</button>
+    <button class="nav-item" data-screen="history"><span class="emoji">🕘</span> Chat History</button>
     <button class="nav-item" data-screen="settings"><span class="emoji">⚙️</span> Settings</button>
   </div>
   <button class="install-btn" id="installBtn">📲 Install App</button>
@@ -459,6 +500,19 @@
     <div class="screen" id="screen-alerts">
       <div class="screen-title">Alerts</div><div class="screen-subtitle">Based on your location's weather</div>
       <div id="alertsContent"><div class="alert-item info"><div>ℹ️</div><div class="alert-text"><div class="t">Set your location</div>Go to Settings to see weather-based alerts here.</div></div></div>
+    </div>
+
+    <div class="screen" id="screen-history">
+      <div id="historyListView">
+        <div class="screen-title">Chat History</div><div class="screen-subtitle">Your past conversations with Farmora</div>
+        <div id="historyList"><div class="card"><p style="color:var(--soil-light);">Loading your conversations...</p></div></div>
+        <button class="quick-btn" id="historyLoadMoreBtn" style="display:none;margin-top:6px;">Load more</button>
+      </div>
+      <div id="historyDetailView" style="display:none;">
+        <button class="onboard-skip" id="historyBackBtn" style="margin:0 0 12px;">← Back to Chat History</button>
+        <div class="screen-subtitle" id="historyDetailDate"></div>
+        <div class="card" id="historyDetailCard"></div>
+      </div>
     </div>
 
     <div class="screen" id="screen-settings">

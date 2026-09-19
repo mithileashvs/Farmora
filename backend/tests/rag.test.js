@@ -179,6 +179,19 @@ test('toPublicSources: maps a list and handles an empty list', () => {
   assert.equal(results[0].title, 'A');
 });
 
+test('toPublicSources: dedupes multiple chunks from the same document, keeping the highest relevance score', () => {
+  const chunks = [
+    { documentId: 'doc-1', title: 'Bacterial Leaf Blight', organization: 'ICAR', sourceUrl: '', relevance: 0.55 },
+    { documentId: 'doc-1', title: 'Bacterial Leaf Blight', organization: 'ICAR', sourceUrl: '', relevance: 0.63 },
+    { documentId: 'doc-1', title: 'Bacterial Leaf Blight', organization: 'ICAR', sourceUrl: '', relevance: 0.40 },
+    { documentId: 'doc-2', title: 'Rice Blast', organization: 'ICAR', sourceUrl: '', relevance: 0.30 },
+  ];
+  const results = toPublicSources(chunks);
+  assert.equal(results.length, 2, 'expected exactly one entry per unique document');
+  const blb = results.find((r) => r.documentId === 'doc-1');
+  assert.equal(blb.relevance, 0.63, 'should keep the highest relevance score among that document\'s chunks');
+});
+
 /* ---------------- RETRIEVAL SCORING (mocked KnowledgeChunk — no live MongoDB) ---------------- */
 
 test('retrieveChunks: filters by similarity threshold, respects top-K, and removes near-duplicates', async (t) => {

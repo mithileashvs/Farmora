@@ -121,8 +121,9 @@ request.
 **Practical implications:**
 - Anyone with access to the browser/device (or who learns the ID) can read
   and modify that profile's data.
-- Clearing browser storage creates a brand-new, unlinked profile.
-- There is no cross-device sync and no account-recovery mechanism.
+- Clearing browser storage creates a brand-new, unlinked profile — unless
+  you've signed up (see "Sign Up / Login" below), which gives you a way to
+  recover the same `userId` from another device or after clearing storage.
 - Ownership checks on farms/crops (`{ _id, userId }` queries — see below) stop
   a request from reading someone else's farm just by guessing an ID in the
   URL, but they do **not** stop someone from reusing another user's ID if
@@ -132,6 +133,39 @@ This is intentionally a placeholder ("development-safe identity") so real
 authentication (passwords/OAuth/JWT) can be layered on top in a later phase
 without rewriting the database schema — every model already keys off a plain
 `userId` string rather than assuming a specific auth mechanism.
+
+## Sign Up / Login (⚠️ still NOT authentication — a userId-recovery convenience)
+
+`POST /api/accounts/signup` and `POST /api/accounts/login` (backed by the
+`Account` model above) let a farmer attach a phone number + password to
+their current anonymous `userId`, so they can recover that same `userId` —
+and therefore their farms/diagnoses/chat history — from a different device
+or after clearing this one's storage, by logging in again.
+
+**What this actually is:**
+- Sign Up: client sends `{ name, phone, password, userId }` (its current
+  anonymous id); the backend hashes the password (`scrypt`, salted, via
+  Node's built-in `crypto` — no new dependency), stores `{ phone,
+  passwordHash, userId, name }`, and upserts a matching `User` profile.
+- Login: client sends `{ phone, password }`; on a match, the backend
+  returns `{ userId, name }` (never the hash) and the frontend overwrites
+  its local `farmora_user_id` with that value, then reloads.
+
+**What this is NOT:**
+- No session, token, or JWT is issued. After login, the client just holds
+  the plain `userId` string again — exactly like the anonymous mechanism
+  above — and every subsequent request still trusts whatever `userId` the
+  client sends, unverified. Knowing a `userId` is still equivalent to
+  "being" that user for every other endpoint.
+- Phone numbers are not verified (no SMS/OTP) — this is a lookup key the
+  farmer chooses, not a confirmed identity.
+- Rate-limited (10 requests/minute/IP on both routes) against naive
+  brute-force guessing, but this is not a substitute for real account
+  lockout/backoff or audit logging.
+
+Do not present this to users as "your account is secure" — it is a
+convenience for not losing access to your data, using the same honest
+framing as the rest of Phase 2's anonymous-identity design.
 
 ## Architecture (Phase 3: retrieval-augmented generation / RAG)
 
@@ -525,6 +559,11 @@ Never returns embedding vectors or internal chunk/document ids.
 - **Chat** — `userId`, `farmId`, `message`, `response`, `language`, `mode`,
   `sources[]` (Phase 3 grounding sources, if any), `createdAt`. Indexed the
   same way as Diagnosis; pruned to the most recent 200 messages per user.
+- **Account** — `phone` (unique), `passwordHash` (`scrypt`, never plain
+  text), `name`, `userId` (links to the anonymous `User`/farm/history data
+  this account can restore). See "Sign Up / Login" below — this is a
+  convenience mechanism for recovering a `userId` across devices, **not**
+  authentication in the security sense (no sessions/JWTs are issued).
 - **KnowledgeChunk** (Phase 3) — `documentId`/`chunkId` (idempotent
   ingestion keys), `chunkIndex`, `title`, `source`, `sourceUrl`,
   `organization`, `category`, `crop`, `cropStage`, `topic`, `language`,
