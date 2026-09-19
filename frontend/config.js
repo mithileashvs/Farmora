@@ -7,5 +7,5 @@
 // Only set this if the frontend is hosted on a DIFFERENT origin than the
 // backend (e.g. GitHub Pages frontend + separately hosted backend).
 window.FARMORA_CONFIG = {
-  API_BASE_URL: ""
+  API_BASE_URL: "https://farmora-backend-148m.onrender.com"
 };
