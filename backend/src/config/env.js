@@ -18,8 +18,10 @@ module.exports = {
   GROQ_API_KEY: process.env.GROQ_API_KEY || '',
   GROQ_MODEL: process.env.GROQ_MODEL || 'qwen/qwen3.6-27b',
   // Comma-separated list of allowed frontend origins, e.g.
-  // "http://localhost:3000,https://myfarmora.app"
-  CLIENT_ORIGIN: process.env.CLIENT_ORIGIN || 'http://localhost:3000',
+  // "https://farmora-rust.vercel.app,http://localhost:5000,http://localhost:3000"
+  CLIENT_ORIGIN:
+    process.env.CLIENT_ORIGIN ||
+    'https://farmora-rust.vercel.app,http://localhost:5000,http://localhost:3000',
   // MongoDB connection string for Phase 2 persistence (profiles, farms,
   // diagnosis/chat history). Optional: if unset, the server still starts and
   // chat/analyze keep working, but database-backed routes return 503.

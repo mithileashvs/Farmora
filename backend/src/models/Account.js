@@ -36,6 +36,4 @@ const accountSchema = new mongoose.Schema(
   { timestamps: true }
 );
 
-accountSchema.index({ phone: 1 }, { unique: true });
-
 module.exports = mongoose.model('Account', accountSchema);

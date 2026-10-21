@@ -798,11 +798,11 @@ async function getAIResponse(question, mode, imageDataUrls) {
 function getAnonUserId() {
   try {
     let id = localStorage.getItem('farmora_user_id');
-    if (!id) {
+    if (!id || typeof id !== 'string' || id.trim().length < 8 || id === 'null' || id === 'undefined') {
       id = (window.crypto && crypto.randomUUID) ? crypto.randomUUID() : ('anon-' + Date.now() + '-' + Math.random().toString(36).slice(2));
       localStorage.setItem('farmora_user_id', id);
     }
-    return id;
+    return id.trim();
   } catch (e) { return 'anon-' + Date.now(); }
 }
 const FARMORA_USER_ID = getAnonUserId();
@@ -834,7 +834,8 @@ async function syncUserProfile() {
 // loaded by loadProfile()) is the fallback when it isn't.
 async function hydrateProfileFromBackend() {
   try {
-    const res = await fetch(apiUrl('/api/users/' + FARMORA_USER_ID));
+    if (!FARMORA_USER_ID || FARMORA_USER_ID.length < 8) return;
+    const res = await fetch(apiUrl('/api/users/' + encodeURIComponent(FARMORA_USER_ID)));
     if (!res.ok) return; // 404 (new user) or 503 (db down) — keep local profile
     const data = await res.json();
     if (!data.success || !data.user) return;

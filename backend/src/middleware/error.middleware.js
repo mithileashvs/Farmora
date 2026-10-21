@@ -1,4 +1,5 @@
 const multer = require('multer');
+const { isOriginAllowed } = require('../config/cors');
 
 /**
  * Centralized error handler. Never forwards stack traces, API keys, internal
@@ -8,6 +9,13 @@ const multer = require('multer');
  */
 // eslint-disable-next-line no-unused-vars
 function errorMiddleware(err, req, res, next) {
+  // Ensure allowed origins receive CORS headers even on application or pipeline errors
+  const origin = req.headers && req.headers.origin;
+  if (origin && isOriginAllowed(origin) && !res.getHeader('Access-Control-Allow-Origin')) {
+    res.setHeader('Access-Control-Allow-Origin', origin);
+    res.setHeader('Vary', 'Origin');
+  }
+
   console.error(`[error] ${req.method} ${req.originalUrl} -> ${err.message}`);
 
   if (err instanceof multer.MulterError) {
@@ -26,7 +34,7 @@ function errorMiddleware(err, req, res, next) {
   }
 
   if (err.message === 'Not allowed by CORS') {
-    return res.status(400).json({ success: false, error: 'Invalid request.' });
+    return res.status(403).json({ success: false, error: 'Not allowed by CORS.' });
   }
 
   const status = Number.isInteger(err.status) ? err.status : 500;

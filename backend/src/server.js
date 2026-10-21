@@ -3,7 +3,8 @@ const express = require('express');
 const helmet = require('helmet');
 const cors = require('cors');
 
-const { PORT, CLIENT_ORIGIN, NODE_ENV } = require('./config/env');
+const { PORT, NODE_ENV } = require('./config/env');
+const { corsOptions } = require('./config/cors');
 const { connectDb } = require('./config/db');
 const healthRoutes = require('./routes/health.routes');
 const chatRoutes = require('./routes/chat.routes');
@@ -59,17 +60,8 @@ app.use(
   })
 );
 
-const allowedOrigins = CLIENT_ORIGIN.split(',').map((o) => o.trim()).filter(Boolean);
-app.use(
-  cors({
-    origin(origin, callback) {
-      // No Origin header = same-origin request (e.g. the frontend served
-      // below) or a non-browser client — allow it. Otherwise check the list.
-      if (!origin || allowedOrigins.includes(origin)) return callback(null, true);
-      return callback(new Error('Not allowed by CORS'));
-    },
-  })
-);
+app.use(cors(corsOptions));
+app.options('*', cors(corsOptions));
 
 // Chat requests are JSON text only — images go through /api/analyze via
 // multipart/form-data instead, so this limit can stay small.
